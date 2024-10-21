@@ -166,7 +166,7 @@ export default function Hero() {
                   src="/inverted_dark_mode_version_screenshot.png"
                   width={2432}
                   height={1442}
-                  className="hidden rounded-md shadow-2xl ring-1 ring-gray-900/10 dark:block"
+                  className="hidden rounded-md shadow-2xl ring-1 ring-gray-100/20 dark:block"
                 />
               </div>
             </div>
