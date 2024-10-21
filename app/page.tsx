@@ -1,3 +1,11 @@
+import Footer from './footer';
+import Hero from './hero';
+
 export default function Home() {
-  return <h1>Hello Supabase</h1>;
+  return (
+    <div>
+      <Hero />
+      <Footer />
+    </div>
+  );
 }

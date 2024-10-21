@@ -6,28 +6,26 @@ import { createClient } from '@/utils/supabase/server';
 import { z } from 'zod';
 
 const LoginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string()
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(3),
 });
 
 export async function login(email: string, password: string) {
   const supabase = createClient();
 
-  try {
-    // Validate inputs
-    LoginSchema.parse({ email, password });
-  } catch (error) {
-    console.error("Validation error:", error);
-    redirect('/error');
-    return;
+  const validatedFields = LoginSchema.safeParse({ email, password });
+
+  // Return early if the form data is invalid
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
   }
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    console.error("Supabase error:", error);
-    redirect('/error');
-    return;
+    return { message: error.message, code: error.code };
   }
 
   revalidatePath('/', 'layout');
@@ -46,7 +44,7 @@ export async function signup(formData: FormData) {
     // Validate inputs
     LoginSchema.parse(data);
   } catch (error) {
-    console.error("Validation error:", error);
+    console.error('Validation error:', error);
     redirect('/error');
     return;
   }
@@ -54,7 +52,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
-    console.error("Supabase error:", error);
+    console.error('Supabase error:', error);
     redirect('/error');
     return;
   }

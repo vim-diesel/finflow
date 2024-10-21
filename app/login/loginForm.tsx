@@ -8,12 +8,12 @@ import { useState } from 'react';
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [result, setResult] = useState('');
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("Executing login action");
-    const res = await login( email, password );
-    console.log(res);
+    const res = await login(email, password);
+    setResult(res?.message ?? '');
   };
 
   return (
@@ -31,11 +31,14 @@ export function LoginForm() {
         id='password'
         name='password'
         type='password'
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setResult('');
+          setPassword(e.target.value);
+        }}
         required
       />
       <Button type='submit'>Log in</Button>
-      {/* {result.data?.message ? <p>{result.data.message}</p> : null} */}
+      {result && <p>{result}</p>}
       {/* <button formAction={signup}>Sign up</button> */}
     </form>
   );
