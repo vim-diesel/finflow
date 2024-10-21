@@ -1,9 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "@/components/link";
+import { Heading } from "@/components/heading";
 
 const navigation = [
   { name: "Product", href: "#" },
@@ -21,15 +23,16 @@ export default function Hero() {
           aria-label="Global"
           className="flex items-center justify-between p-6 lg:px-8"
         >
-          <div className="flex lg:flex-1">
-            <a href="#" className="-m-1.5 p-1.5">
-              <span className="sr-only">Your Company</span>
+          <div className="flex items-center lg:flex-1">
+            <Link href="/" className="flex items-center -m-1.5 p-1.5">
+              <span className="sr-only">FinFlow Financial Tracker</span>
               <img
                 alt=""
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                className="h-8 w-auto"
+                src="/edited-logo.png"
+                className="h-24 w-auto lg:h-32"
               />
-            </a>
+              <Heading level={1} >FinFlow</Heading>
+            </Link>
           </div>
           <div className="flex lg:hidden">
             <button
@@ -46,7 +49,7 @@ export default function Hero() {
               <a
                 key={item.name}
                 href={item.href}
-                className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100"
+                className="text-md font-semibold leading-6 text-gray-900 dark:text-gray-100"
               >
                 {item.name}
               </a>
@@ -55,7 +58,7 @@ export default function Hero() {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <a
               href="#"
-              className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100"
+              className="text-md font-semibold leading-6 text-gray-900 dark:text-gray-100"
             >
               Log in <span aria-hidden="true">&rarr;</span>
             </a>
@@ -73,8 +76,8 @@ export default function Hero() {
                 <span className="sr-only">Your Company</span>
                 <img
                   alt=""
-                  src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                  className="h-8 w-auto"
+                  src="/edited-logo.png"
+                  className="h-16 w-auto"
                 />
               </a>
               <button
@@ -130,12 +133,12 @@ export default function Hero() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
               <h1 className="text-balance text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl dark:text-gray-100">
-                Data to enrich your online business
+                Transform Your Budget, Transform Your Life.
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
-                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
-                lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat
-                fugiat aliqua.
+                FinFlow helps you track your spending, manage budgets, and hit
+                your financial goals with ease. Get real-time insights and take
+                control of your money, all in one place.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
                 <a
