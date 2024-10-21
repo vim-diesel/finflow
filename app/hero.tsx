@@ -87,7 +87,7 @@ export default function Hero() {
               </button>
             </div>
             <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
+              <div className="-my-6 divide-y divide-gray-500/10 dark:divide-gray-50/30">
                 <div className="space-y-2 py-6">
                   {navigation.map((item) => (
                     <a
