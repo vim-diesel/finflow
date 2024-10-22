@@ -8,8 +8,7 @@ import { Heading } from "@/components/heading";
 import { useState } from "react";
 
 const navigation = [
-  { name: "Product", href: "#" },
-  { name: "Features", href: "#" },
+  { name: "Features", href: "/features" },
   { name: "About", href: "/about" },
 ];
 
@@ -17,7 +16,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50">
+    <header className="z-20">
       <nav
         aria-label="Global"
         className="flex items-center justify-between p-6 lg:px-8"
