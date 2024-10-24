@@ -12,7 +12,7 @@ export default async function Page() {
       <h1>Transactions</h1>
       {/* Render transactions here */}
       {transactions.map((transaction) => (
-        <div key={transaction.id}>{transaction.payee}</div>
+        <div key={transaction.id}>{transaction.payee} : ${transaction.amount}</div>
       ))}
     </div>
   );

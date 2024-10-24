@@ -1,5 +1,7 @@
 "use client";
 
+import { createClient } from "@/utils/supabase/client";
+
 import { Avatar } from "@/components/avatar";
 import {
   Dropdown,
@@ -46,6 +48,9 @@ import {
   TicketIcon,
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
+import { UserResponse } from "@supabase/supabase-js";
+
+const supabase = createClient();
 
 function AccountDropdownMenu({
   anchor,
@@ -76,7 +81,13 @@ function AccountDropdownMenu({
   );
 }
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardLayout({
+  user,
+  children,
+}: {
+  user: UserResponse;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
@@ -134,16 +145,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           <SidebarBody>
             <SidebarSection>
-              <SidebarItem href="/dashboard" current={pathname === "/dashboard"}>
+              <SidebarItem
+                href="/dashboard"
+                current={pathname === "/dashboard"}
+              >
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
-              </SidebarItem>
-              <SidebarItem
-                href="/events"
-                current={pathname.startsWith("/events")}
-              >
-                <Square2StackIcon />
-                <SidebarLabel>Events</SidebarLabel>
               </SidebarItem>
               <SidebarItem
                 href="/dashboard/transactions"
@@ -152,19 +159,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <TicketIcon />
                 <SidebarLabel>Transactions</SidebarLabel>
               </SidebarItem>
-              <SidebarItem
-                href="/settings"
-                current={pathname.startsWith("/settings")}
-              >
+              <SidebarItem href="#" current={pathname.startsWith("/settings")}>
                 <Cog6ToothIcon />
                 <SidebarLabel>Settings</SidebarLabel>
-              </SidebarItem>
-            </SidebarSection>
-
-            <SidebarSection className="max-lg:hidden">
-              <SidebarHeading>Upcoming Events</SidebarHeading>
-              <SidebarItem key={32} href="#">
-                Event Name
               </SidebarItem>
             </SidebarSection>
 
@@ -194,10 +191,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   />
                   <span className="min-w-0">
                     <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">
-                      Ian
+                      {user.data?.user?.email}
                     </span>
                     <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
-                      Ian@devflow.tech
+                      {user.data?.user?.email}
                     </span>
                   </span>
                 </span>
