@@ -1,17 +1,17 @@
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
-import { z } from 'zod';
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClientServer } from "@/utils/supabase/server";
+import { z } from "zod";
 
 const LoginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(3),
+  email: z.string().email("Invalid email address"),
+  password: z.string(),
 });
 
 export async function login(email: string, password: string) {
-  const supabase = createClient();
+  const supabase = createClientServer();
 
   const validatedFields = LoginSchema.safeParse({ email, password });
 
@@ -28,35 +28,33 @@ export async function login(email: string, password: string) {
     return { message: error.message, code: error.code };
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/');
+  revalidatePath("/dashboard", "page");
+  redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {
   const supabase = createClient();
 
   const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
   };
 
   try {
     // Validate inputs
     LoginSchema.parse(data);
   } catch (error) {
-    console.error('Validation error:', error);
-    redirect('/error');
+    console.error("Validation error:", error);
+    redirect("/error");
     return;
   }
 
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
-    console.error('Supabase error:', error);
-    redirect('/error');
-    return;
+    return { message: error.message, code: error.code };
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/');
+  revalidatePath("/dashboard", "page");
+  redirect("/dashboard");
 }
