@@ -1,6 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
-import { createClient } from "@/utils/supabase/client";
 
 import { Avatar } from "@/components/avatar";
 import {
@@ -49,8 +48,6 @@ import {
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
 import { UserResponse } from "@supabase/supabase-js";
-
-const supabase = createClient();
 
 function AccountDropdownMenu({
   anchor,
