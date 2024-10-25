@@ -1,17 +1,7 @@
 "use server";
 import { createClientServer } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Database, Tables } from "@/database.types";
-
-type Budget = Tables<"budgets">;
-type MonthlyBudget = Tables<"monthly_budgets">;
-type Category = Tables<"categories">;
-type MonthlyCategoryDetails = Tables<"monthly_category_details">;
-
-// Define a type that represents the structure of the data returned from getCategoriesWithDetails
-type CategoryWithDetails = Category & {
-  monthly_category_details: MonthlyCategoryDetails;
-};
+import { Budget, MonthlyBudget, CategoryWithDetails, CategoryGroup } from "./types";
 
 // Server Action to fetch transactions
 export async function getDefaultBudget(): Promise<Budget | null> {
@@ -99,4 +89,19 @@ export async function getCategoriesWithDetails(currMonthlyBudgetID: number): Pro
 
   revalidatePath("/dashboard");
   return flattenedData;
+}
+
+export async function getCategoryGroups(budgetId: number): Promise<CategoryGroup[] | null> {
+  const supabase = createClientServer();
+  const { data, error } = await supabase
+    .from('category_groups')
+    .select('*')
+    .eq('budget_id', budgetId);
+
+  if (error || !data) {
+    console.error("Error fetching category groups: ", error)
+    return null;
+  }
+
+  return data;
 }
