@@ -1,24 +1,37 @@
 "use server";
 import { createClientServer } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { Database, Tables } from "@/database.types";
+
+type Budget = Tables<"budgets">;
+type MonthlyBudget = Tables<"monthly_budgets">;
+type Category = Tables<"categories">;
+type MonthlyCategoryDetails = Tables<"monthly_category_details">;
+
+// Define a type that represents the structure of the data returned from getCategoriesWithDetails
+type CategoryWithDetails = Category & {
+  monthly_category_details: MonthlyCategoryDetails;
+};
 
 // Server Action to fetch transactions
-export async function getBudgets() {
+export async function getDefaultBudget(): Promise<Budget | null> {
   const supabase = createClientServer();
 
   const { data: budgets, error } = await supabase.from("budgets").select("*");
 
-  if (error) {
+  if (error || !budgets) {
     console.error("Error fetching budgets:", error);
-    return [];
+    return null;
   }
 
   revalidatePath("/dashboard");
-  return budgets;
+  return budgets[0];
 }
 
-// Server Action to fetch monthly budgets
-export async function getMonthlyBudgets() {
+// Server Action to fetch the current monthly budget
+export async function getCurrMonthlyBudget(
+  budgetId: number,
+): Promise<MonthlyBudget | null> {
   const supabase = createClientServer();
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -44,7 +57,7 @@ export async function getMonthlyBudgets() {
     ),
   );
 
-  const { data: monthlyBudgets, error } = await supabase
+  const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
     .select("*")
     .gte("month", firstDayOfMonthUTC.toISOString())
@@ -52,11 +65,38 @@ export async function getMonthlyBudgets() {
 
   if (error) {
     console.error("Error fetching monthly budgets:", error);
-    return [];
+    return null;
   }
 
-  console.log(monthlyBudgets);
+  revalidatePath("/dashboard");
+  return monthlyBudget[0];
+}
+
+// Fetch the JOINed table of our categories and their monthly details
+export async function getCategoriesWithDetails(currMonthlyBudgetID: number): Promise<CategoryWithDetails[] | null> {
+  const supabase = createClientServer();
+  const { data: catsWithDeets, error } = await supabase
+    .from("categories")
+    .select(
+      `
+    *,
+    monthly_category_details (
+      *
+    )
+  `,
+    )
+    .eq("monthly_category_details.monthly_budget_id", currMonthlyBudgetID);
+
+  if (error || !catsWithDeets) {
+    console.error("Error fetching catories with details:", error);
+    return null;
+  }
+  // Map over the data to flatten `monthly_category_details` to a single object
+  const flattenedData = catsWithDeets.map((category) => ({
+    ...category,
+    monthly_category_details: category.monthly_category_details[0] || null, // Get the first detail or set to null
+  }));
 
   revalidatePath("/dashboard");
-  return monthlyBudgets;
+  return flattenedData;
 }

@@ -1,20 +1,34 @@
 import React from "react";
-import { getBudgets, getMonthlyBudgets } from "./actions";
-import { Database } from "@/database.types"; // Adjust the import path as needed
+import {
+  getDefaultBudget,
+  getCurrMonthlyBudget,
+  getCategoriesWithDetails,
+} from "./actions";
+import { Database, Tables } from "@/database.types"; // Adjust the import path as needed
 import HeadingBar from "@/components/tailwindui/headingBar";
+import BudgetTable from "@/components/tailwindui/budgetTable";
 
-type Budget = Database["public"]["Tables"]["budgets"]["Row"];
-type MonthlyBudget = Database["public"]["Tables"]["monthly_budgets"]["Row"];
+type Budget = Tables<"budgets">;
+type MonthlyBudget = Tables<"monthly_budgets">;
+type Category = Tables<"categories">;
+type CategoryGroup = Tables<"category_groups">;
+type MonthlyCategoryDetails = Tables<"monthly_category_details">;
+
+// Define a type that represents the structure of the data returned from getCategoriesWithDetails
+type CategoryWithDetails = Category & {
+  monthly_category_details: MonthlyCategoryDetails[];
+};
 
 export default async function Page() {
-  const budgets: Budget[] = await getBudgets();
-  const mainBudget = budgets[0];
-
-  const monthlyBudgets: MonthlyBudget[] = await getMonthlyBudgets();
+  const budget: Budget | null = await getDefaultBudget();
+  const monthlyBudget: MonthlyBudget | null = await getCurrMonthlyBudget(budget!.id as number);
+  const currMonthlyBudgetID = monthlyBudget!.id as number;
+  const categories = await getCategoriesWithDetails(currMonthlyBudgetID);
+  console.log(JSON.stringify(categories, null, 2));
 
   return (
     <div>
-      <HeadingBar monthlyBudget={monthlyBudgets[0]} />
+      <HeadingBar monthlyBudget={monthlyBudget} />
     </div>
   );
 }

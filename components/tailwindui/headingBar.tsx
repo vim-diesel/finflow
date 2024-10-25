@@ -1,14 +1,14 @@
-import { Database } from "@/database.types";
+import { Database, Tables } from "@/database.types";
 import { Heading } from "../heading";
 
-type monthlyBudget = Database["public"]["Tables"]["monthly_budgets"]["Row"];
+type monthlyBudget = Tables<'monthly_budgets'>;
 
 export default function HeadingBar({
   monthlyBudget,
 }: {
-  monthlyBudget: monthlyBudget;
+  monthlyBudget: monthlyBudget | null;
 }) {
-  const monthDate = new Date(`${monthlyBudget.month}T00:00:00Z`);
+  const monthDate = new Date(`${monthlyBudget?.month}T00:00:00Z`);
 
   // Use Intl.DateTimeFormat with timeZone option set to UTC
   const month = new Intl.DateTimeFormat("default", {
@@ -28,7 +28,7 @@ export default function HeadingBar({
         </Heading>
       </div>
         <Heading level={3} className="font-medium text-gray-500">
-          ${monthlyBudget.available} available
+          ${monthlyBudget?.available} available
         </Heading>
 
     </div>

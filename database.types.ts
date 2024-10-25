@@ -98,21 +98,21 @@ export type Database = {
       }
       category_groups: {
         Row: {
-          budget_id: number | null
+          budget_id: number
           created_at: string
           id: number
           name: string
           user_id: string
         }
         Insert: {
-          budget_id?: number | null
+          budget_id: number
           created_at?: string
           id?: number
           name?: string
           user_id: string
         }
         Update: {
-          budget_id?: number | null
+          budget_id?: number
           created_at?: string
           id?: number
           name?: string
@@ -220,7 +220,6 @@ export type Database = {
           created_at: string
           date: string | null
           id: number
-          monthly_budget_id: number
           note: string | null
           payee: string | null
           transaction_type: Database["public"]["Enums"]["transaction_type_enum"]
@@ -234,7 +233,6 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: number
-          monthly_budget_id: number
           note?: string | null
           payee?: string | null
           transaction_type: Database["public"]["Enums"]["transaction_type_enum"]
@@ -248,7 +246,6 @@ export type Database = {
           created_at?: string
           date?: string | null
           id?: number
-          monthly_budget_id?: number
           note?: string | null
           payee?: string | null
           transaction_type?: Database["public"]["Enums"]["transaction_type_enum"]
@@ -267,13 +264,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_monthly_budget_id_fkey"
-            columns: ["monthly_budget_id"]
-            isOneToOne: false
-            referencedRelation: "monthly_budgets"
             referencedColumns: ["id"]
           },
         ]
