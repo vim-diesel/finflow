@@ -168,33 +168,40 @@ export type Database = {
           amount_assigned: number | null
           amount_spent: number | null
           carryover_from_previous_month: number | null
-          category_id: number | null
+          category_id: number
           created_at: string
           id: number
-          monthly_budget_id: number | null
-          user_id: string | null
+          monthly_budget_id: number
+          user_id: string
         }
         Insert: {
           amount_assigned?: number | null
           amount_spent?: number | null
           carryover_from_previous_month?: number | null
-          category_id?: number | null
+          category_id: number
           created_at?: string
           id?: number
-          monthly_budget_id?: number | null
-          user_id?: string | null
+          monthly_budget_id: number
+          user_id: string
         }
         Update: {
           amount_assigned?: number | null
           amount_spent?: number | null
           carryover_from_previous_month?: number | null
-          category_id?: number | null
+          category_id?: number
           created_at?: string
           id?: number
-          monthly_budget_id?: number | null
-          user_id?: string | null
+          monthly_budget_id?: number
+          user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "monthly_category_details_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "monthly_category_details_monthly_budget_id_fkey"
             columns: ["monthly_budget_id"]
