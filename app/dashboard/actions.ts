@@ -1,7 +1,13 @@
 "use server";
 import { createClientServer } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Budget, MonthlyBudget, CategoryWithDetails, CategoryGroup } from "./types";
+import {
+  Budget,
+  MonthlyBudget,
+  CategoryWithDetails,
+  CategoryGroup,
+} from "./types";
+import { PostgrestError } from "@supabase/supabase-js";
 
 // Server Action to fetch transactions
 export async function getDefaultBudget(): Promise<Budget | null> {
@@ -21,7 +27,7 @@ export async function getDefaultBudget(): Promise<Budget | null> {
 // Server Action to fetch the current monthly budget
 export async function getCurrMonthlyBudget(
   budgetId: number,
-): Promise<MonthlyBudget | null> {
+): Promise<MonthlyBudget | PostgrestError> {
   const supabase = createClientServer();
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -50,12 +56,15 @@ export async function getCurrMonthlyBudget(
   const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
     .select("*")
+    .eq("budget_id", budgetId)
     .gte("month", firstDayOfMonthUTC.toISOString())
     .lt("month", firstDayOfNextMonthUTC.toISOString());
 
+  //Let our Server Component do that error handling, so it can decide to still 
+  // render the page or not.
   if (error) {
     console.error("Error fetching monthly budgets:", error);
-    return null;
+    return error;
   }
 
   revalidatePath("/dashboard");
@@ -63,7 +72,9 @@ export async function getCurrMonthlyBudget(
 }
 
 // Fetch the JOINed table of our categories and their monthly details
-export async function getCategoriesWithDetails(currMonthlyBudgetID: number): Promise<CategoryWithDetails[] | null> {
+export async function getCategoriesWithDetails(
+  currMonthlyBudgetID: number,
+): Promise<CategoryWithDetails[] | null> {
   const supabase = createClientServer();
   const { data: catsWithDeets, error } = await supabase
     .from("categories")
@@ -91,15 +102,17 @@ export async function getCategoriesWithDetails(currMonthlyBudgetID: number): Pro
   return flattenedData;
 }
 
-export async function getCategoryGroups(budgetId: number): Promise<CategoryGroup[] | null> {
+export async function getCategoryGroups(
+  budgetId: number,
+): Promise<CategoryGroup[] | null> {
   const supabase = createClientServer();
   const { data, error } = await supabase
-    .from('category_groups')
-    .select('*')
-    .eq('budget_id', budgetId);
+    .from("category_groups")
+    .select("*")
+    .eq("budget_id", budgetId);
 
   if (error || !data) {
-    console.error("Error fetching category groups: ", error)
+    console.error("Error fetching category groups: ", error);
     return null;
   }
 
