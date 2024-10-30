@@ -7,11 +7,10 @@ import {
 } from "./actions";
 import HeadingBar from "@/components/tailwindui/headingBar";
 import BudgetTable from "./budgetTable";
-import { Budget, MonthlyBudget } from "./types";
+import { Budget, MonthlyBudget } from "../types";
 import { PostgrestError } from "@supabase/postgrest-js";
 
 export default async function Page() {
-
   // These steps can probably be condensed into one or two function calls.
   // Find BudgetID > Find curr MonthlyBudgetID > Get Categories > Get CategoryGroups
   const budget: Budget | null = await getDefaultBudget();
@@ -19,7 +18,7 @@ export default async function Page() {
     await getCurrMonthlyBudget(budget!.id as number);
   if (monthlyBudget instanceof Error) {
     // We will have to handle this somehow. Create a new budget? Each budget
-    // should only have one monthly budget per month.
+    // should only have one monthlyBudget row per month.
     console.error("Error fetching current monthly budget", monthlyBudget);
     return;
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { CategoryGroup, CategoryWithDetails } from "@/app/dashboard/types";
+import { CategoryGroup, CategoryWithDetails } from "@/app/types";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 function classNames(...classes: (string | boolean | undefined)[]): string {
