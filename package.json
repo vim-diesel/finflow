@@ -43,5 +43,10 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5"
+  },
+  "overrides": {
+    "ajv": "^8.17.1",
+    "whatwg-url": "^14.0.0",
+    "tough-cookie": "^5.0.0"
   }
 }
