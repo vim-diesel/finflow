@@ -16,6 +16,10 @@ const config: Config = {
     // ...
     "^@/(.*)$": "<rootDir>/$1",
   },
+  // "transform": {
+  //   "^.+\\.jsx?$": "babel-jest", 
+  //   "^.+\\.tsx?$": "ts-jest"
+  // },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

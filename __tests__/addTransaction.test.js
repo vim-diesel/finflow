@@ -18,6 +18,11 @@ describe("addTransaction", () => {
       insert: jest.fn(),
     };
     createClientServer.mockReturnValue(mockSupabase);
+
+    // Mock console.error to suppress error messages in test output
+    consoleErrorMock = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
