@@ -1,5 +1,8 @@
+"use client";
+
 import { Fragment } from "react";
 import { CategoryGroup, CategoryWithDetails } from "@/app/dashboard/types";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 function classNames(...classes: (string | boolean | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -15,38 +18,33 @@ export default function BudgetTable({
   return (
     <>
       <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold leading-6 text-gray-900 dark:text-gray-200">
-            Categories
-          </h1>
-          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            A list of all the categories in your budget
-          </p>
-        </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            type="button"
-            className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Add category
-          </button>
+        <div className="flex min-w-0">
+          <div className="mt-4 sm:ml-8 sm:mt-0">
+            <button
+              type="button"
+              className="flex items-center rounded-md px-1 py-0.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 dark:hover:bg-gray-700"
+            >
+              <PlusCircleIcon className="inline h-6 w-6 text-indigo-600 dark:text-indigo-300" />
+              <span className="ml-2">Add category</span>
+            </button>
+          </div>
         </div>
       </div>
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full">
+            <table className="min-w-full table-fixed">
               <thead className="bg-white dark:bg-black">
                 <tr>
                   <th
                     scope="col"
-                    className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3 dark:text-gray-200"
+                    className="w-1/2 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3 dark:text-gray-200"
                   >
                     Category
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200"
+                    className="w-1/8 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200"
                   >
                     Assigned
                   </th>
@@ -70,11 +68,11 @@ export default function BudgetTable({
               <tbody className="bg-white dark:bg-gray-600">
                 {categoryGroups?.map((categoryGroup) => (
                   <Fragment key={categoryGroup.id}>
-                    <tr className="border-t border-gray-200 ">
+                    <tr className="border-t border-gray-200">
                       <th
                         scope="colgroup"
                         colSpan={5}
-                        className="bg-gray-50 py-2 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3 dark:bg-gray-500 dark:text-gray-200"
+                        className="bg-gray-50 py-2 pl-1 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3 dark:bg-gray-500 dark:text-gray-200"
                       >
                         {categoryGroup.name}
                       </th>
@@ -91,20 +89,20 @@ export default function BudgetTable({
                             "border-t",
                           )}
                         >
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3 dark:text-gray-200">
+                          <td className="whitespace-nowrap py-4 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-3 dark:text-gray-200">
                             {category.name}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
                             $
                             {category.monthly_category_details
                               ?.amount_assigned ?? 0}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
                             $
                             {category.monthly_category_details?.amount_spent ??
                               0}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
                             $
                             {(category.monthly_category_details
                               ?.amount_assigned ?? 0) -

@@ -3,15 +3,26 @@ import {
   getDefaultBudget,
   getCurrMonthlyBudget,
   getCategoriesWithDetails,
-  getCategoryGroups
+  getCategoryGroups,
 } from "./actions";
 import HeadingBar from "@/components/tailwindui/headingBar";
-import BudgetTable from "@/components/tailwindui/budgetTable";
-import {Budget, MonthlyBudget, Category, CategoryGroup, MonthlyCategoryDetails, CategoryWithDetails} from './types';
+import BudgetTable from "./budgetTable";
+import { Budget, MonthlyBudget } from "./types";
+import { PostgrestError } from "@supabase/postgrest-js";
 
 export default async function Page() {
+
+  // These steps can probably be condensed into one or two function calls.
+  // Find BudgetID > Find curr MonthlyBudgetID > Get Categories > Get CategoryGroups
   const budget: Budget | null = await getDefaultBudget();
-  const monthlyBudget: MonthlyBudget | null = await getCurrMonthlyBudget(budget!.id as number);
+  const monthlyBudget: MonthlyBudget | PostgrestError =
+    await getCurrMonthlyBudget(budget!.id as number);
+  if (monthlyBudget instanceof Error) {
+    // We will have to handle this somehow. Create a new budget? Each budget
+    // should only have one monthly budget per month.
+    console.error("Error fetching current monthly budget", monthlyBudget);
+    return;
+  }
   const currMonthlyBudgetID = monthlyBudget!.id as number;
   const categories = await getCategoriesWithDetails(currMonthlyBudgetID);
   const categoryGroups = await getCategoryGroups(budget!.id as number);
@@ -19,10 +30,7 @@ export default async function Page() {
   return (
     <div>
       <HeadingBar monthlyBudget={monthlyBudget} />
-      <BudgetTable
-        categoryGroups={categoryGroups}
-        categories={categories}
-      />
+      <BudgetTable categoryGroups={categoryGroups} categories={categories} />
     </div>
   );
 }
