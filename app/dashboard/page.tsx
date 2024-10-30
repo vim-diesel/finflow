@@ -4,10 +4,10 @@ import {
   getCurrMonthlyBudget,
   getCategoriesWithDetails,
   getCategoryGroups,
-} from "./actions";
+} from "@/app/actions";
 import HeadingBar from "@/components/tailwindui/headingBar";
 import BudgetTable from "./budgetTable";
-import { Budget, MonthlyBudget } from "../types";
+import { Budget, MonthlyBudget } from "@/app/types";
 import { PostgrestError } from "@supabase/postgrest-js";
 
 export default async function Page() {

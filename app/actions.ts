@@ -6,6 +6,9 @@ import {
   MonthlyBudget,
   CategoryWithDetails,
   CategoryGroup,
+  Transaction,
+  TransactionTypeEnum,
+  Category,
 } from "./types";
 import { PostgrestError } from "@supabase/supabase-js";
 
@@ -60,7 +63,7 @@ export async function getCurrMonthlyBudget(
     .gte("month", firstDayOfMonthUTC.toISOString())
     .lt("month", firstDayOfNextMonthUTC.toISOString());
 
-  //Let our Server Component do that error handling, so it can decide to still 
+  //Let our Server Component do that error handling, so it can decide to still
   // render the page or not.
   if (error) {
     console.error("Error fetching monthly budgets:", error);
@@ -117,4 +120,59 @@ export async function getCategoryGroups(
   }
 
   return data;
+}
+
+/* User can add a transaction row. 
+
+Date Handling: use only the date part of the ISO string to match 
+schema's timestamp without time zone.
+
+*/
+export async function addTransaction(
+  budgetId: number,
+  amount: number,
+  transactionType: TransactionTypeEnum,
+  category?: Category,
+  date?: Date,
+  memo?: string,
+  cleared?: boolean,
+  payee?: string,
+): Promise<Transaction | Error> {
+  const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return new Error("Cannot find user");
+  }
+
+  if (amount < 0) {
+    return new Error("Transaction amount must be non-negative");
+  }
+
+  if (transactionType !== "inflow" && transactionType !== "outflow") {
+    return new Error("Invalid transaction type");
+  }
+
+  const { data, error } = await supabase.from("transactions").insert({
+    budget_id: budgetId,
+    user_id: user.id,
+    amount,
+    transaction_type: transactionType,
+    category_id: category?.id,
+    date: date
+      ? date.toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+    memo: memo || "",
+    cleared: cleared || true,
+    payee: payee || null,
+  });
+
+  if (error || !data) {
+    console.error("Error inserting transaction: ", error);
+    return new Error(error?.message || "Failed to insert transaction");
+  }
+
+  return data as Transaction;
 }
