@@ -131,7 +131,7 @@ schema's timestamp without time zone.
 export async function addTransaction(
   budgetId: number,
   amount: number,
-  transactionType: TransactionTypeEnum,
+  transactionType: "inflow" | "outflow",
   category?: Category,
   date?: Date,
   memo?: string,
