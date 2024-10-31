@@ -1,7 +1,7 @@
 import { Database, Tables } from "@/database.types";
-import { Heading } from "../heading";
+import { Heading } from "../../components/heading";
 
-type monthlyBudget = Tables<'monthly_budgets'>;
+type monthlyBudget = Tables<"monthly_budgets">;
 
 export default function HeadingBar({
   monthlyBudget,
@@ -16,9 +16,8 @@ export default function HeadingBar({
     timeZone: "UTC",
   }).format(monthDate);
 
-
   return (
-    <div className="md:flex md:items-center md:justify-between w-full border-b border-gray-400">
+    <div className="w-full border-b border-gray-400 md:flex md:items-center md:justify-between">
       <div className="min-w-0 flex-1">
         <Heading
           level={2}
@@ -27,10 +26,9 @@ export default function HeadingBar({
           {month} 2024
         </Heading>
       </div>
-        <Heading level={3} className="font-medium text-gray-500">
-          ${monthlyBudget?.available} available
-        </Heading>
-
+      <Heading level={3} className="font-medium text-gray-500">
+        ${monthlyBudget?.available} available
+      </Heading>
     </div>
   );
 }

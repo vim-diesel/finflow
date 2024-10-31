@@ -5,16 +5,15 @@ import {
   getCategoriesWithDetails,
   getCategoryGroups,
 } from "@/app/actions";
-import HeadingBar from "@/components/tailwindui/headingBar";
+import HeadingBar from "@/app/dashboard/headingBar";
 import BudgetTable from "./budgetTable";
 import { Budget, MonthlyBudget } from "@/app/types";
-import { PostgrestError } from "@supabase/postgrest-js";
 
 export default async function Page() {
   // These steps can probably be condensed into one or two function calls.
   // Find BudgetID > Find curr MonthlyBudgetID > Get Categories > Get CategoryGroups
   const budget: Budget | null = await getDefaultBudget();
-  const monthlyBudget: MonthlyBudget | PostgrestError =
+  const monthlyBudget: MonthlyBudget | Error =
     await getCurrMonthlyBudget(budget!.id as number);
   if (monthlyBudget instanceof Error) {
     // We will have to handle this somehow. Create a new budget? Each budget

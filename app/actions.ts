@@ -7,7 +7,6 @@ import {
   CategoryWithDetails,
   CategoryGroup,
   Transaction,
-  TransactionTypeEnum,
   Category,
 } from "./types";
 import { PostgrestError } from "@supabase/supabase-js";
@@ -15,6 +14,9 @@ import { PostgrestError } from "@supabase/supabase-js";
 // Server Action to fetch transactions
 export async function getDefaultBudget(): Promise<Budget | null> {
   const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: budgets, error } = await supabase.from("budgets").select("*");
 
@@ -30,8 +32,16 @@ export async function getDefaultBudget(): Promise<Budget | null> {
 // Server Action to fetch the current monthly budget
 export async function getCurrMonthlyBudget(
   budgetId: number,
-): Promise<MonthlyBudget | PostgrestError> {
+): Promise<MonthlyBudget | Error> {
   const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return new Error("Cannot find user");
+  }
+
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const firstDayOfNextMonth = new Date(
@@ -40,28 +50,30 @@ export async function getCurrMonthlyBudget(
     1,
   );
 
-  // Ensure the dates are in UTC
-  const firstDayOfMonthUTC = new Date(
-    Date.UTC(
-      firstDayOfMonth.getFullYear(),
-      firstDayOfMonth.getMonth(),
-      firstDayOfMonth.getDate(),
-    ),
-  );
-  const firstDayOfNextMonthUTC = new Date(
-    Date.UTC(
-      firstDayOfNextMonth.getFullYear(),
-      firstDayOfNextMonth.getMonth(),
-      firstDayOfNextMonth.getDate(),
-    ),
-  );
+  // // Ensure the dates are in UTC
+  // const firstDayOfMonthUTC = new Date(
+  //   Date.UTC(
+  //     firstDayOfMonth.getFullYear(),
+  //     firstDayOfMonth.getMonth(),
+  //     firstDayOfMonth.getDate(),
+  //   ),
+  // );
+  // const firstDayOfNextMonthUTC = new Date(
+  //   Date.UTC(
+  //     firstDayOfNextMonth.getFullYear(),
+  //     firstDayOfNextMonth.getMonth(),
+  //     firstDayOfNextMonth.getDate(),
+  //   ),
+  // );
 
   const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
     .select("*")
     .eq("budget_id", budgetId)
-    .gte("month", firstDayOfMonthUTC.toISOString())
-    .lt("month", firstDayOfNextMonthUTC.toISOString());
+    .gte("month", firstDayOfMonth.toISOString())
+    .lt("month", firstDayOfNextMonth.toISOString())
+    .limit(1)
+    .single();
 
   //Let our Server Component do that error handling, so it can decide to still
   // render the page or not.
@@ -71,7 +83,7 @@ export async function getCurrMonthlyBudget(
   }
 
   revalidatePath("/dashboard");
-  return monthlyBudget[0];
+  return monthlyBudget;
 }
 
 // Fetch the JOINed table of our categories and their monthly details
@@ -175,4 +187,15 @@ export async function addTransaction(
   }
 
   return data as Transaction;
+}
+
+export async function getTransactions(budgetId: number) {
+  const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return new Error("Cannot find user");
+  }
 }

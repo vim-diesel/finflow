@@ -11,5 +11,3 @@ export type Transaction = Tables<"transactions">;
 export type CategoryWithDetails = Category & {
   monthly_category_details: MonthlyCategoryDetails;
 };
-
-export type TransactionTypeEnum = Enums<"transaction_type_enum">
