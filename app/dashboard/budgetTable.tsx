@@ -44,24 +44,21 @@ export default function BudgetTable({
                   </th>
                   <th
                     scope="col"
-                    className="w-1/8 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200"
+                    className="w-1/8 px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-gray-200"
                   >
                     Assigned
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200"
+                    className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-gray-200"
                   >
                     Activity
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200"
+                    className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-gray-200"
                   >
                     Available
-                  </th>
-                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-3">
-                    <span className="sr-only">Edit</span>
                   </th>
                 </tr>
               </thead>
@@ -89,20 +86,20 @@ export default function BudgetTable({
                             "border-t",
                           )}
                         >
-                          <td className="whitespace-nowrap py-4 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-3 dark:text-gray-200">
+                          <td className="whitespace-nowrap py-4 pl-2 pr-3 text-left text-sm font-medium text-gray-900 sm:pl-3 dark:text-gray-200">
                             {category.name}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-900 dark:text-gray-300">
                             $
                             {category.monthly_category_details
                               ?.amount_assigned ?? 0}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-900 dark:text-gray-300">
                             $
                             {category.monthly_category_details?.amount_spent ??
                               0}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-300">
+                          <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-900 dark:text-gray-300">
                             $
                             {(category.monthly_category_details
                               ?.amount_assigned ?? 0) -
@@ -110,15 +107,6 @@ export default function BudgetTable({
                                 ?.amount_spent ?? 0) +
                               (category.monthly_category_details
                                 ?.carryover_from_previous_month ?? 0)}
-                          </td>
-                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-3">
-                            <a
-                              href="#"
-                              className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-300 dark:hover:text-indigo-400"
-                            >
-                              Edit
-                              <span className="sr-only">, {category.name}</span>
-                            </a>
                           </td>
                         </tr>
                       ))}
