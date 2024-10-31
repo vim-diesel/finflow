@@ -5,7 +5,7 @@ import { Heading } from "@/components/heading";
 type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 
 export default async function Page() {
-  const transactions: Transaction[] = await getTransactions();
+  const transactions: Transaction | null = await getTransactions(1);
 
   return (
     <div>
