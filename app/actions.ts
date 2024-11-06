@@ -12,17 +12,21 @@ import {
 import { PostgrestError } from "@supabase/supabase-js";
 
 // Server Action to fetch transactions
-export async function getDefaultBudget(): Promise<Budget | null> {
+export async function getDefaultBudget(): Promise<Budget | Error> {
   const supabase = createClientServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user?.id) {
+    return Error("Cannot find user");
+  }
+
   const { data: budgets, error } = await supabase.from("budgets").select("*");
 
   if (error || !budgets) {
     console.error("Error fetching budgets:", error);
-    return null;
+    return error;
   }
 
   revalidatePath("/dashboard");
@@ -39,7 +43,7 @@ export async function getCurrMonthlyBudget(
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return new Error("Cannot find user");
+    return Error("Cannot find user");
   }
 
   const today = new Date();
@@ -156,15 +160,15 @@ export async function addTransaction(
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return new Error("Cannot find user");
+    return Error("Cannot find user");
   }
 
   if (amount < 0) {
-    return new Error("Transaction amount must be non-negative");
+    return Error("Transaction amount must be non-negative");
   }
 
   if (transactionType !== "inflow" && transactionType !== "outflow") {
-    return new Error("Invalid transaction type");
+    return Error("Invalid transaction type");
   }
 
   const { data, error } = await supabase.from("transactions").insert({
@@ -183,7 +187,7 @@ export async function addTransaction(
 
   if (error || !data) {
     console.error("Error inserting transaction: ", error);
-    return new Error(error?.message || "Failed to insert transaction");
+    return Error(error?.message || "Failed to insert transaction");
   }
 
   return data as Transaction;
@@ -196,6 +200,6 @@ export async function getTransactions(budgetId: number) {
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return new Error("Cannot find user");
+    return Error("Cannot find user");
   }
 }
