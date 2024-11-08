@@ -342,7 +342,7 @@ export async function getAvailableAmount(
   // RLS is on so they can only see their own data, anyway.
 
   // To display this months current Available amount, we need all transactions
-  // fromt his month and all previous months.
+  // from this month and all previous months.
   let { data: transactions, error: transactionsError } = await supabase
     .from("transactions")
     .select("*")
