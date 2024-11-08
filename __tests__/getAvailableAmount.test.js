@@ -1,6 +1,10 @@
 import { getAvailableAmount } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 
+// It seems we need seperate tests to test the error being returned from each
+// database query. This is because the function returns after the first error
+// and the other queries are not executed. 
+
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
@@ -107,7 +111,7 @@ describe("getAvailableAmount", () => {
     expect(result.message).toBe("User authentication failed or user not found");
   });
 
-  it("should handle database errors", async () => {
+  it("should handle database errors on transactions table", async () => {
     // Mock the database error
     const dbError = new Error("Database error");
 
@@ -145,5 +149,114 @@ describe("getAvailableAmount", () => {
     //   "Error fetching monthly category details: ",
     //   dbError
     // );
+  });
+
+  it("should handle database errors on monthly_budgets table", async () => {
+    // Mock the database error
+    const dbError = new Error("Database error");
+
+    const mockTransactions = [
+      { transaction_type: "inflow", amount: 1000 },
+      { transaction_type: "outflow", amount: 300, category_id: 1 },
+      { transaction_type: "outflow", amount: 200, category_id: null },
+    ];
+
+    // Mock the three separate database calls
+    mockSupabase.from.mockImplementation((table) => {
+      switch (table) {
+        case "transactions":
+          return {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            lte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: mockTransactions, error: null }),
+          };
+        case "monthly_budgets":
+          return {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            lte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: null, error: dbError }),
+          };
+      }
+    });
+
+    const result = await getAvailableAmount(1, new Date());
+
+    expect(result).toBeInstanceOf(Error);
+    expect(result.message).toBe("Database error");
+
+    // Verify that console.error was called for this table error
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      "Error fetching monthly budgets: ",
+      dbError,
+    );
+  });
+
+  it("should handle database errors on monthly_category_details table", async () => {
+    // Mock the database error
+    const dbError = new Error("Database error");
+
+    const mockTransactions = [
+      { transaction_type: "inflow", amount: 1000 },
+      { transaction_type: "outflow", amount: 300, category_id: 1 },
+      { transaction_type: "outflow", amount: 200, category_id: null },
+    ];
+
+    const mockMonthlyBudgets = [{ id: 1 }];
+
+    // Mock the three separate database calls
+    mockSupabase.from.mockImplementation((table) => {
+      switch (table) {
+        case "transactions":
+          return {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            lte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: mockTransactions, error: null }),
+          };
+        case "monthly_budgets":
+          return {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            lte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: mockMonthlyBudgets, error: null }),
+          };
+        case "monthly_category_details":
+          return {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            lte: jest.fn().mockReturnThis(),
+            order: jest.fn().mockResolvedValue({
+              data: null,
+              error: dbError,
+            }),
+          };
+      }
+    });
+
+    const result = await getAvailableAmount(1, new Date());
+
+    expect(result).toBeInstanceOf(Error);
+    expect(result.message).toBe("Database error");
+
+    // Verify that console.error was called for this table error
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      "Error fetching monthly category details: ",
+      dbError,
+    );
   });
 });
