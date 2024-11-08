@@ -8,6 +8,7 @@ jest.mock("@/utils/supabase/server", () => ({
 
 describe("addTransaction", () => {
   let mockSupabase;
+  // test commit
 
   beforeEach(() => {
     mockSupabase = {
