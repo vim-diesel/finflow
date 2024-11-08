@@ -1,6 +1,7 @@
 "use server";
-import { createClientServer } from "@/utils/supabase/server";
+import { createServersideClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { PostgrestError } from '@supabase/supabase-js';
 import {
   Budget,
   MonthlyBudget,
@@ -9,11 +10,14 @@ import {
   Transaction,
   Category,
 } from "./types";
-import { PostgrestError } from "@supabase/supabase-js";
 
 // Server Action to fetch transactions
 export async function getDefaultBudget(): Promise<Budget | Error> {
-  const supabase = createClientServer();
+
+  // Boilerplate code to create a Supabase client
+  // (basically configure a new fetch call)
+  // must be done anytime you wish to call auth.getUser()
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -37,7 +41,7 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
 export async function getCurrMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | Error> {
-  const supabase = createClientServer();
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -91,15 +95,15 @@ export async function getCurrMonthlyBudget(
 }
 
 // Fetch the JOINed table of our categories and their monthly details
-// Inputs: 
-// budgetId - the ID of the budget to fetch categories for (number) 
-// 
+// Inputs:
+// budgetId - the ID of the budget to fetch categories for (number)
+//
 // Output: an array of CategoryWithDetails objects or an Error
 // categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
   currMonthlyBudgetID: number,
 ): Promise<CategoryWithDetails[] | Error> {
-  const supabase = createClientServer();
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -136,8 +140,8 @@ export async function getCategoriesWithDetails(
 export async function getCategoryGroups(
   budgetId: number,
 ): Promise<CategoryGroup[] | Error> {
-  const supabase = createClientServer();
-  
+  const supabase = createServersideClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -177,7 +181,7 @@ export async function addTransaction(
   cleared?: boolean,
   payee?: string,
 ): Promise<null | Error> {
-  const supabase = createClientServer();
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -216,8 +220,10 @@ export async function addTransaction(
   return null;
 }
 
-export async function getTransactions(budgetId: number): Promise<Transaction[] | Error> {
-  const supabase = createClientServer();
+export async function getTransactions(
+  budgetId: number,
+): Promise<Transaction[] | Error> {
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -239,8 +245,13 @@ export async function getTransactions(budgetId: number): Promise<Transaction[] |
   return data;
 }
 
-export async function updateAssigned(budgetId: number, monthlyBudgetId: number, categoryId: number, assigned: number): Promise<null | Error> {
-  const supabase = createClientServer();
+export async function updateAssigned(
+  budgetId: number,
+  monthlyBudgetId: number,
+  categoryId: number,
+  assigned: number,
+): Promise<null | Error> {
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -255,7 +266,7 @@ export async function updateAssigned(budgetId: number, monthlyBudgetId: number, 
 
   const { error } = await supabase
     .from("monthly_category_details")
-    .update({amount_assigned: assigned})
+    .update({ amount_assigned: assigned })
     .eq("monthly_budget_id", monthlyBudgetId)
     .eq("category_id", categoryId);
 
@@ -267,8 +278,10 @@ export async function updateAssigned(budgetId: number, monthlyBudgetId: number, 
   return null;
 }
 
-export async function getMonthlyAvailable(monthlyBudgetId: number): Promise<number | Error> {
-  const supabase = createClientServer();
+export async function getMonthlyAvailable(
+  monthlyBudgetId: number,
+): Promise<number | Error> {
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -287,18 +300,29 @@ export async function getMonthlyAvailable(monthlyBudgetId: number): Promise<numb
     return error;
   }
 
-  const totalAssigned = data.reduce((acc: number, curr: { available: number | null }) => {
-    if (curr.available === null) {
-      return acc;
-    }
-    return acc + curr.available;
-  }, 0);
+  const totalAssigned = data.reduce(
+    (acc: number, curr: { available: number | null }) => {
+      if (curr.available === null) {
+        return acc;
+      }
+      return acc + curr.available;
+    },
+    0,
+  );
 
   return totalAssigned;
 }
 
+// Fetch the available amount for the current month
+// Inputs:
+// budgetId - the ID of the budget to fetch the available amount for (number)
+// currMonth - the current month (Date)
+//
+// Output: the available amount (number) or an Error
+// availableAmount - the total available amount for the current month
+
 export async function getAvailableAmount(budgetId: number, currMonth: Date) {
-  const supabase = createClientServer();
+  const supabase = createServersideClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -306,4 +330,19 @@ export async function getAvailableAmount(budgetId: number, currMonth: Date) {
   if (!user?.id) {
     return Error("User authentication failed or user not found");
   }
+
+  // Get all transactions up to the current month
+  // we are checking for userId and BudgetID
+  // but I think at this point, if the user is on the dashboard and we know their 
+  // budgetId, we can just get all transactions for that budgetId without checking
+  // the userId. We should have already checked that the user is authenticated.
+  // RLS is on so they can only see their own data, anyway.
+  
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .eq("user_id", user.id)
+    .lte("date", currMonth.toISOString())
+    .order("date", { ascending: true });
 }

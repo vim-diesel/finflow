@@ -13,11 +13,11 @@ type SupabaseClientMock = {
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
-import { createClientServer } from "@/utils/supabase/server";
+import { createServersideClient } from "@/utils/supabase/server";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
-  createClientServer: jest.fn(),
+  createServersideClient: jest.fn(),
 }));
 
 describe("getDefaultBudget", () => {
@@ -32,7 +32,7 @@ describe("getDefaultBudget", () => {
       from: jest.fn().mockReturnThis(),
       select: jest.fn(),
     };
-    (createClientServer as jest.Mock).mockReturnValue(mockSupabase);
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
     // Mock console.error to suppress error messages in test output
     consoleErrorMock = jest

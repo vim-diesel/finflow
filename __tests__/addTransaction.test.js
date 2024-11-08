@@ -1,9 +1,9 @@
 import { addTransaction } from "../app/actions";
-import { createClientServer } from "@/utils/supabase/server";
+import { createClientServer, createServersideClient } from "@/utils/supabase/server";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
-  createClientServer: jest.fn(),
+  createServersideClient: jest.fn(),
 }));
 
 describe("addTransaction", () => {
@@ -18,7 +18,7 @@ describe("addTransaction", () => {
       from: jest.fn().mockReturnThis(),
       insert: jest.fn(),
     };
-    createClientServer.mockReturnValue(mockSupabase);
+    createServersideClient.mockReturnValue(mockSupabase);
 
     // Mock console.error to suppress error messages in test output
     consoleErrorMock = jest
