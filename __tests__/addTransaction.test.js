@@ -1,5 +1,5 @@
 import { addTransaction } from "../app/actions";
-import { createClientServer, createServersideClient } from "@/utils/supabase/server";
+import { createServersideClient } from "@/utils/supabase/server";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({

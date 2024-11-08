@@ -1,5 +1,4 @@
 import { getDefaultBudget } from "../app/actions";
-import { revalidatePath } from "next/cache";
 
 type SupabaseClientMock = {
   auth: {
