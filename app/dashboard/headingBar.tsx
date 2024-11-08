@@ -1,6 +1,8 @@
+import { get } from "http";
 import { Heading } from "../../components/heading";
 
 import { MonthlyBudget } from "../types";
+import { getMonthlyAvailable } from "../actions";
 
 export default function HeadingBar({
   monthlyBudget,
@@ -13,7 +15,10 @@ export default function HeadingBar({
   if (!monthlyBudget) {
     return <Heading level={2}>Monthly budget not found</Heading>;
   }
-  console.log(monthlyBudget);
+
+  const month = new Date(monthlyBudget.month).toLocaleString("default", {
+    month: "long",
+  });
 
 
   return (
@@ -23,7 +28,7 @@ export default function HeadingBar({
           level={2}
           className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
         >
-          Nov 2024
+          {month} 2024
         </Heading>
       </div>
       <Heading level={3} className="font-medium text-gray-500">

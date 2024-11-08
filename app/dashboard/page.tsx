@@ -7,8 +7,10 @@ import {
 } from "@/app/actions";
 import HeadingBar from "@/app/dashboard/headingBar";
 import BudgetTable from "./budgetTable";
-import { Budget, MonthlyBudget, CategoryGroup } from "@/app/types";
+import { Budget, MonthlyBudget, CategoryGroup, CategoryWithDetails } from "@/app/types";
 
+
+// Sort the category groups by priority (Bills, Needs, Wants, and anything else)
 function sortCategoryGroups(categoryGroups: CategoryGroup[]): CategoryGroup[] {
   const priority: { [key: string]: number } = {
     Bills: 1,
@@ -24,10 +26,10 @@ function sortCategoryGroups(categoryGroups: CategoryGroup[]): CategoryGroup[] {
 }
 
 export default async function Page() {
-  // These steps can probably be condensed into one or two function calls.
-  // Find BudgetID > Find curr MonthlyBudgetID > 
+  // These steps can probably be condensed into one or two action calls.
+  // Find Budget > Find curr MonthlyBudget > 
   // > Get Categories joined with Monthly Category Details table > Get CategoryGroups
-  const budget = await getDefaultBudget();
+  const budget: Budget | Error = await getDefaultBudget();
 
   if (budget instanceof Error) {
     // We will have to handle this somehow. Create a new budget?
@@ -52,7 +54,7 @@ export default async function Page() {
     return;
   }
 
-  const categories = await getCategoriesWithDetails(currMonthlyBudget.id);
+  const categories: CategoryWithDetails[] | Error = await getCategoriesWithDetails(currMonthlyBudget.id);
   if (categories instanceof Error) {
     // We will have to handle this somehow. Depends on the error.
     // Maybe the user has no categories?

@@ -91,6 +91,11 @@ export async function getCurrMonthlyBudget(
 }
 
 // Fetch the JOINed table of our categories and their monthly details
+// Inputs: 
+// budgetId - the ID of the budget to fetch categories for (number) 
+// 
+// Output: an array of CategoryWithDetails objects or an Error
+// categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
   currMonthlyBudgetID: number,
 ): Promise<CategoryWithDetails[] | Error> {
@@ -232,4 +237,73 @@ export async function getTransactions(budgetId: number): Promise<Transaction[] |
   }
 
   return data;
+}
+
+export async function updateAssigned(budgetId: number, monthlyBudgetId: number, categoryId: number, assigned: number): Promise<null | Error> {
+  const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return Error("User authentication failed or user not found");
+  }
+
+  if (assigned < 0) {
+    return Error("Assigned amount must be non-negative");
+  }
+
+  const { error } = await supabase
+    .from("monthly_category_details")
+    .update({amount_assigned: assigned})
+    .eq("monthly_budget_id", monthlyBudgetId)
+    .eq("category_id", categoryId);
+
+  if (error) {
+    console.error("Error updating assigned amount: ", error);
+    return error;
+  }
+
+  return null;
+}
+
+export async function getMonthlyAvailable(monthlyBudgetId: number): Promise<number | Error> {
+  const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return Error("User authentication failed or user not found");
+  }
+
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("available")
+    .eq("monthly_budget_id", monthlyBudgetId);
+
+  if (error || !data) {
+    console.error("Error fetching monthly available: ", error);
+    return error;
+  }
+
+  const totalAssigned = data.reduce((acc: number, curr: { available: number | null }) => {
+    if (curr.available === null) {
+      return acc;
+    }
+    return acc + curr.available;
+  }, 0);
+
+  return totalAssigned;
+}
+
+export async function getAvailableAmount(budgetId: number, currMonth: Date) {
+  const supabase = createClientServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return Error("User authentication failed or user not found");
+  }
 }
