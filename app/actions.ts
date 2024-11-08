@@ -1,7 +1,7 @@
 "use server";
 import { createServersideClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { PostgrestError } from '@supabase/supabase-js';
+import { PostgrestError } from "@supabase/supabase-js";
 import {
   Budget,
   MonthlyBudget,
@@ -13,7 +13,6 @@ import {
 
 // Server Action to fetch transactions
 export async function getDefaultBudget(): Promise<Budget | Error> {
-
   // Boilerplate code to create a Supabase client
   // (basically configure a new fetch call)
   // must be done anytime you wish to call auth.getUser()
@@ -320,8 +319,12 @@ export async function getMonthlyAvailable(
 //
 // Output: the available amount (number) or an Error
 // availableAmount - the total available amount for the current month
-
-export async function getAvailableAmount(budgetId: number, currMonth: Date) {
+// or an Error
+// or null, which it probably doesn't have to. We can remove this
+export async function getAvailableAmount(
+  budgetId: number,
+  currMonth: Date,
+): Promise<number | Error | null> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -333,16 +336,84 @@ export async function getAvailableAmount(budgetId: number, currMonth: Date) {
 
   // Get all transactions up to the current month
   // we are checking for userId and BudgetID
-  // but I think at this point, if the user is on the dashboard and we know their 
+  // but I think at this point, if the user is on the dashboard and we know their
   // budgetId, we can just get all transactions for that budgetId without checking
   // the userId. We should have already checked that the user is authenticated.
   // RLS is on so they can only see their own data, anyway.
-  
-  const { data, error } = await supabase
+
+  // To display this months current Available amount, we need all transactions
+  // fromt his month and all previous months.
+  let { data: transactions, error: transactionsError } = await supabase
     .from("transactions")
     .select("*")
     .eq("budget_id", budgetId)
     .eq("user_id", user.id)
     .lte("date", currMonth.toISOString())
     .order("date", { ascending: true });
+
+  if (transactionsError || !transactions) {
+    console.error("Error fetching transactions: ", transactionsError);
+    return transactionsError;
+  }
+
+  // Get all monthly budgets up to the current month
+  const { data: monthlyBudgets, error: bugdetsError } = await supabase
+    .from("monthly_budgets")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .eq("user_id", user.id)
+    .lte("month", currMonth.toISOString())
+    .order("month", { ascending: true });
+
+  if (bugdetsError || !monthlyBudgets) {
+    console.error("Error fetching monthly budgets: ", bugdetsError);
+    return bugdetsError;
+  }
+
+  // Get all monthly category details up to the current month
+  const { data: monthlyCategoryDetails, error: categoryError } = await supabase
+    .from("monthly_category_details")
+    .select("*")
+    .eq("user_id", user.id)
+    .lte(
+      "monthly_budget_id",
+      monthlyBudgets?.[monthlyBudgets.length - 1]?.id || 0,
+    )
+    .order("monthly_budget_id", { ascending: true });
+
+  if (categoryError || !monthlyCategoryDetails) {
+    console.error("Error fetching monthly category details: ", categoryError);
+    return categoryError;
+  }
+
+  //  We'll sum up all previous inflow transactions, subtract the amount
+  // assigned to all categories, and subtract previous uncategorized outflow.
+  // This will give us the available amount for the current month.
+
+  // Total inflow
+  const totalInflow = transactions
+    .filter((t) => t.transaction_type === "inflow")
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Total assigned
+  const totalAssigned = monthlyCategoryDetails.reduce(
+    (acc, curr) => acc + Number(curr.amount_assigned),
+    0,
+  );
+
+  // total uncategorized outflow
+  const totalUncategorizedOutflow = transactions
+    .filter((t) => t.transaction_type === "outflow" && !t.category_id)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Calculate available amount
+  const availableAmount =
+    totalInflow - totalAssigned - totalUncategorizedOutflow;
+
+  console.log("Transactions:", transactions);
+  console.log("Total Inflow:", totalInflow);
+  console.log("Total Assigned:", totalAssigned);
+  console.log("Total Uncategorized Outflow:", totalUncategorizedOutflow);
+
+  return availableAmount;
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClientServer } from "@/utils/supabase/server";
+import { createServersideClient } from "@/utils/supabase/server";
 import { z } from "zod";
 
 const LoginSchema = z.object({
@@ -11,7 +11,7 @@ const LoginSchema = z.object({
 });
 
 export async function login(email: string, password: string) {
-  const supabase = createClientServer();
+  const supabase = createServersideClient();
 
   const validatedFields = LoginSchema.safeParse({ email, password });
 
@@ -33,7 +33,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = createClient();
+  const supabase = createServersideClient();
 
   const data = {
     email: formData.get("email") as string,
