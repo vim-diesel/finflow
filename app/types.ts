@@ -1,4 +1,4 @@
-import { Tables, Enums } from "@/database.types";
+import { Tables } from "@/database.types";
 
 export type Budget = Tables<"budgets">;
 export type MonthlyBudget = Tables<"monthly_budgets">;

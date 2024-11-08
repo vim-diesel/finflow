@@ -1,20 +1,20 @@
-import { Database, Tables } from "@/database.types";
 import { Heading } from "../../components/heading";
 
-type monthlyBudget = Tables<"monthly_budgets">;
+import { MonthlyBudget } from "../types";
 
 export default function HeadingBar({
   monthlyBudget,
 }: {
-  monthlyBudget: monthlyBudget | null;
+  monthlyBudget: MonthlyBudget | null;
 }) {
-  const monthDate = new Date(`${monthlyBudget?.month}T00:00:00Z`);
 
-  // Use Intl.DateTimeFormat with timeZone option set to UTC
-  const month = new Intl.DateTimeFormat("default", {
-    month: "long",
-    timeZone: "UTC",
-  }).format(monthDate);
+  // The parent server component should not be passing null, but we check 
+  // just in case.
+  if (!monthlyBudget) {
+    return <Heading level={2}>Monthly budget not found</Heading>;
+  }
+  console.log(monthlyBudget);
+
 
   return (
     <div className="w-full border-b border-gray-400 md:flex md:items-center md:justify-between">
@@ -23,7 +23,7 @@ export default function HeadingBar({
           level={2}
           className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
         >
-          {month} 2024
+          Nov 2024
         </Heading>
       </div>
       <Heading level={3} className="font-medium text-gray-500">

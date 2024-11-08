@@ -19,13 +19,13 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return Error("Cannot find user");
+    return Error("User authentication failed or user not found");
   }
 
   const { data: budgets, error } = await supabase.from("budgets").select("*");
 
   if (error || !budgets) {
-    console.error("Error fetching budgets:", error);
+    console.error("Error fetching budgets: ", error);
     return error;
   }
 
@@ -43,7 +43,7 @@ export async function getCurrMonthlyBudget(
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return Error("Cannot find user");
+    return Error("User authentication failed or user not found");
   }
 
   const today = new Date();
@@ -82,7 +82,7 @@ export async function getCurrMonthlyBudget(
   //Let our Server Component do that error handling, so it can decide to still
   // render the page or not.
   if (error) {
-    console.error("Error fetching monthly budgets:", error);
+    console.error("Error fetching current monthly budgets: ", error);
     return error;
   }
 
@@ -93,26 +93,33 @@ export async function getCurrMonthlyBudget(
 // Fetch the JOINed table of our categories and their monthly details
 export async function getCategoriesWithDetails(
   currMonthlyBudgetID: number,
-): Promise<CategoryWithDetails[] | null> {
+): Promise<CategoryWithDetails[] | Error> {
   const supabase = createClientServer();
-  const { data: catsWithDeets, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return Error("User authentication failed or user not found");
+  }
+
+  const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
     .select(
       `
     *,
-    monthly_category_details (
-      *
-    )
+    monthly_category_details!inner (*)
   `,
     )
     .eq("monthly_category_details.monthly_budget_id", currMonthlyBudgetID);
 
-  if (error || !catsWithDeets) {
+  if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details:", error);
-    return null;
+    return error;
   }
+
   // Map over the data to flatten `monthly_category_details` to a single object
-  const flattenedData = catsWithDeets.map((category) => ({
+  const flattenedData = categoriesWithDetails.map((category) => ({
     ...category,
     monthly_category_details: category.monthly_category_details[0] || null, // Get the first detail or set to null
   }));
@@ -123,8 +130,17 @@ export async function getCategoriesWithDetails(
 
 export async function getCategoryGroups(
   budgetId: number,
-): Promise<CategoryGroup[] | null> {
+): Promise<CategoryGroup[] | Error> {
   const supabase = createClientServer();
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return Error("User authentication failed or user not found");
+  }
+
   const { data, error } = await supabase
     .from("category_groups")
     .select("*")
@@ -132,7 +148,7 @@ export async function getCategoryGroups(
 
   if (error || !data) {
     console.error("Error fetching category groups: ", error);
-    return null;
+    return error;
   }
 
   return data;
@@ -142,6 +158,8 @@ export async function getCategoryGroups(
 
 Date Handling: use only the date part of the ISO string to match 
 schema's timestamp without time zone.
+
+We don't return the data inserted into the table, just null.
 
 */
 export async function addTransaction(
@@ -153,14 +171,14 @@ export async function addTransaction(
   memo?: string,
   cleared?: boolean,
   payee?: string,
-): Promise<Transaction | Error> {
+): Promise<null | Error> {
   const supabase = createClientServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return Error("Cannot find user");
+    return Error("User authentication failed or user not found");
   }
 
   if (amount < 0) {
@@ -171,7 +189,7 @@ export async function addTransaction(
     return Error("Invalid transaction type");
   }
 
-  const { data, error } = await supabase.from("transactions").insert({
+  const { error } = await supabase.from("transactions").insert({
     budget_id: budgetId,
     user_id: user.id,
     amount,
@@ -185,21 +203,33 @@ export async function addTransaction(
     payee: payee || null,
   });
 
-  if (error || !data) {
+  if (error) {
     console.error("Error inserting transaction: ", error);
-    return Error(error?.message || "Failed to insert transaction");
+    return error;
   }
 
-  return data as Transaction;
+  return null;
 }
 
-export async function getTransactions(budgetId: number) {
+export async function getTransactions(budgetId: number): Promise<Transaction[] | Error> {
   const supabase = createClientServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return Error("Cannot find user");
+    return Error("User authentication failed or user not found");
   }
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("budget_id", budgetId);
+
+  if (error || !data) {
+    console.error("Error fetching transactions: ", error);
+    return error;
+  }
+
+  return data;
 }

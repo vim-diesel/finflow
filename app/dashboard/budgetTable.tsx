@@ -12,8 +12,8 @@ export default function BudgetTable({
   categoryGroups,
   categories,
 }: {
-  categoryGroups: CategoryGroup[] | null;
-  categories: CategoryWithDetails[] | null;
+  categoryGroups: CategoryGroup[] |  null;
+  categories: CategoryWithDetails[];
 }) {
   return (
     <>

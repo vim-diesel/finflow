@@ -34,7 +34,7 @@ describe("addTransaction", () => {
     const mockTransaction = {
       id: 1,
       amount: 100,
-      transaction_type: "income",
+      transaction_type: "inflow",
     };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
@@ -45,7 +45,7 @@ describe("addTransaction", () => {
 
     const result = await addTransaction(1, 100, "inflow");
 
-    expect(result).toEqual(mockTransaction);
+    expect(result).toBeNull();
     expect(mockSupabase.from).toHaveBeenCalledWith("transactions");
     expect(mockSupabase.insert).toHaveBeenCalledWith({
       budget_id: 1,
@@ -65,7 +65,7 @@ describe("addTransaction", () => {
 
     const result = await addTransaction(1, 100, "inflow");
     expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("Cannot find user");
+    expect(result.message).toBe("User authentication failed or user not found");
   });
 
   it("should reject negative amounts", async () => {
