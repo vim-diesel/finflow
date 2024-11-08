@@ -410,10 +410,5 @@ export async function getAvailableAmount(
   const availableAmount =
     totalInflow - totalAssigned - totalUncategorizedOutflow;
 
-  console.log("Transactions:", transactions);
-  console.log("Total Inflow:", totalInflow);
-  console.log("Total Assigned:", totalAssigned);
-  console.log("Total Uncategorized Outflow:", totalUncategorizedOutflow);
-
   return availableAmount;
 }
