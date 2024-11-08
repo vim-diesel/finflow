@@ -84,7 +84,6 @@ describe("getDefaultBudget", () => {
 
     const result = await getDefaultBudget();
     expect(result).toBeInstanceOf(Error);
-    // expect(consoleErrorMock).toHaveBeenCalledWith("Error fetching budgets: ", expect.any(Error));
-    expect(result.message)
+    expect(consoleErrorMock).toHaveBeenCalledWith("Error fetching budgets: ", expect.any(Error));
   });
 });
