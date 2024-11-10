@@ -53,7 +53,7 @@ describe("addTransaction", () => {
       user_id: "user123",
       amount: 100,
       transaction_type: "inflow",
-      category_id: undefined,
+      category_id: null,
       date: expect.any(String),
       memo: "",
       cleared: true,

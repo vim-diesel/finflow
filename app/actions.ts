@@ -1,17 +1,15 @@
 "use server";
 import { createServersideClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { PostgrestError } from "@supabase/supabase-js";
 import {
   Budget,
   MonthlyBudget,
   CategoryWithDetails,
   CategoryGroup,
   Transaction,
-  Category,
 } from "./types";
 
-// Server Action to fetch transactions
+// Server Action to fetch the default budget of the user
 export async function getDefaultBudget(): Promise<Budget | Error> {
   // Boilerplate code to create a Supabase client
   // (basically configure a new fetch call)
@@ -25,15 +23,15 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
     return Error("User authentication failed or user not found");
   }
 
-  const { data: budgets, error } = await supabase.from("budgets").select("*");
+  const { data: budget, error } = await supabase.from("budgets").select("*").limit(1).single();
 
-  if (error || !budgets) {
+  if (error || !budget) {
     console.error("Error fetching budgets: ", error);
     return error;
   }
 
   revalidatePath("/dashboard");
-  return budgets[0];
+  return budget;
 }
 
 // Server Action to fetch the current monthly budget
@@ -168,13 +166,25 @@ Date Handling: use only the date part of the ISO string to match
 schema's timestamp without time zone.
 
 We don't return the data inserted into the table, just null.
-
 */
+
+// Inputs:
+// budgetId - the ID of the budget to add the transaction to (number)
+// amount - the amount of the transaction (number)
+// transactionType - the type of transaction (string)
+// category - the ID of the category of the transaction (number)
+// date - the date of the transaction (Date)
+// memo - the memo of the transaction (string)
+// cleared - whether the transaction is cleared (boolean)
+// payee - the payee of the transaction (string)
+//
+// Output: null or an Error
+
 export async function addTransaction(
   budgetId: number,
   amount: number,
   transactionType: "inflow" | "outflow",
-  category?: Category,
+  categoryId?: number,
   date?: Date,
   memo?: string,
   cleared?: boolean,
@@ -202,7 +212,7 @@ export async function addTransaction(
     user_id: user.id,
     amount,
     transaction_type: transactionType,
-    category_id: category?.id,
+    category_id: categoryId || null,
     date: date
       ? date.toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],

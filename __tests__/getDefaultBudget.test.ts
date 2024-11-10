@@ -6,6 +6,8 @@ type SupabaseClientMock = {
   };
   from: jest.Mock;
   select: jest.Mock;
+  limit: jest.Mock;
+  single: jest.Mock;
 };
 
 // Mock revalidatePath to avoid static generation store error
@@ -29,7 +31,9 @@ describe("getDefaultBudget", () => {
         getUser: jest.fn(),
       },
       from: jest.fn().mockReturnThis(),
-      select: jest.fn(),
+      select: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn(),
     };
     (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
@@ -48,8 +52,8 @@ describe("getDefaultBudget", () => {
     const mockBudget = { id: 1, name: "Test Budget" };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
-    mockSupabase.select.mockResolvedValue({
-      data: [mockBudget],
+    mockSupabase.single.mockResolvedValue({
+      data: mockBudget,
       error: null,
     });
 
@@ -76,7 +80,7 @@ describe("getDefaultBudget", () => {
     const mockUser = { id: "user123" };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
-    mockSupabase.select.mockResolvedValue({
+    mockSupabase.single.mockResolvedValue({
       data: null,
       error: new Error("Database error"),
     });
