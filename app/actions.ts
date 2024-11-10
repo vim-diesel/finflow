@@ -9,8 +9,38 @@ import {
   Transaction,
 } from "./types";
 
+/************************************************************
+getCurrMonthlyBudget needs tests for:
+Valid date range queries
+No budget found for date range
+Multiple budgets found error
+
+getCategoriesWithDetails needs tests for:
+Successful flattening of nested data
+Empty categories array
+Invalid join query
+
+getCategoryGroups needs tests for:
+Successful fetch
+No groups found
+Auth failure
+Database error
+
+getAvailableAmount needs additional tests for:
+Complex calculation scenarios
+Different transaction types
+Edge cases with dates
+************************************************************/
+
 // Server Action to fetch the default budget of the user
-export async function getDefaultBudget(): Promise<Budget | Error> {
+
+/*
+If the user has no budget, we need to assume it never got created or was deleted. 
+If we are calling this function, we need to create one. We will just do it for them.
+But we will do it where we called the server action, and create another server 
+action to create a new budget.
+*/
+export async function getDefaultBudget(): Promise<Budget | null | Error> {
   // Boilerplate code to create a Supabase client
   // (basically configure a new fetch call)
   // must be done anytime you wish to call auth.getUser()
@@ -23,15 +53,20 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
     return Error("User authentication failed or user not found");
   }
 
+  // Make sure this picks the first budget (lowest budgetId)
   const { data: budget, error } = await supabase
     .from("budgets")
     .select("*")
     .limit(1)
     .single();
 
-  if (error || !budget) {
+  if (error) {
     console.error("Error fetching budgets: ", error);
     return error;
+  }
+
+  if (!budget || budget === null) {
+    return null;
   }
 
   revalidatePath("/dashboard");
@@ -416,4 +451,30 @@ export async function getAvailableAmount(
     totalInflow - totalAssigned - totalUncategorizedOutflow;
 
   return availableAmount;
+}
+
+export async function createDefaultBudget(
+  name: string = "My Budget",
+): Promise<Budget | Error> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return new Error("User authentication failed or user not found");
+  }
+
+  const { data, error } = await supabase
+    .from("budgets")
+    .insert({ name, user_id: user.id })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating budget: ", error);
+    return error;
+  }
+
+  return data;
 }
