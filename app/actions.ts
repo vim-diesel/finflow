@@ -23,7 +23,11 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
     return Error("User authentication failed or user not found");
   }
 
-  const { data: budget, error } = await supabase.from("budgets").select("*").limit(1).single();
+  const { data: budget, error } = await supabase
+    .from("budgets")
+    .select("*")
+    .limit(1)
+    .single();
 
   if (error || !budget) {
     console.error("Error fetching budgets: ", error);
@@ -34,7 +38,12 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
   return budget;
 }
 
-// Server Action to fetch the current monthly budget
+// Server Action to fetch the current monthly budget (current: time at which this is called)
+// Inputs:
+// budgetId - the ID of the budget to fetch the current monthly budget for (number)
+//
+// Output: the current monthly budget or an Error
+// monthlyBudget - the current monthly budget (Today) or an Error
 export async function getCurrMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | Error> {
@@ -55,21 +64,7 @@ export async function getCurrMonthlyBudget(
     1,
   );
 
-  // // Ensure the dates are in UTC
-  // const firstDayOfMonthUTC = new Date(
-  //   Date.UTC(
-  //     firstDayOfMonth.getFullYear(),
-  //     firstDayOfMonth.getMonth(),
-  //     firstDayOfMonth.getDate(),
-  //   ),
-  // );
-  // const firstDayOfNextMonthUTC = new Date(
-  //   Date.UTC(
-  //     firstDayOfNextMonth.getFullYear(),
-  //     firstDayOfNextMonth.getMonth(),
-  //     firstDayOfNextMonth.getDate(),
-  //   ),
-  // );
+  // Do we need to use UTC dates here? I think we should be fine with local dates
 
   const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
@@ -254,11 +249,11 @@ export async function getTransactions(
   return data;
 }
 
+// Updates the assigned amount for a category in a monthly budget
 export async function updateAssigned(
-  budgetId: number,
   monthlyBudgetId: number,
   categoryId: number,
-  assigned: number,
+  amountAssigned: number,
 ): Promise<null | Error> {
   const supabase = createServersideClient();
   const {
@@ -269,13 +264,13 @@ export async function updateAssigned(
     return Error("User authentication failed or user not found");
   }
 
-  if (assigned < 0) {
+  if (amountAssigned < 0) {
     return Error("Assigned amount must be non-negative");
   }
 
   const { error } = await supabase
     .from("monthly_category_details")
-    .update({ amount_assigned: assigned })
+    .update({ amount_assigned: amountAssigned })
     .eq("monthly_budget_id", monthlyBudgetId)
     .eq("category_id", categoryId);
 
@@ -287,40 +282,40 @@ export async function updateAssigned(
   return null;
 }
 
-export async function getMonthlyAvailable(
-  monthlyBudgetId: number,
-): Promise<number | Error> {
-  const supabase = createServersideClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+// export async function getMonthlyAvailable(
+//   monthlyBudgetId: number,
+// ): Promise<number | Error> {
+//   const supabase = createServersideClient();
+//   const {
+//     data: { user },
+//   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return Error("User authentication failed or user not found");
-  }
+//   if (!user?.id) {
+//     return Error("User authentication failed or user not found");
+//   }
 
-  const { data, error } = await supabase
-    .from("monthly_budgets")
-    .select("available")
-    .eq("monthly_budget_id", monthlyBudgetId);
+//   const { data, error } = await supabase
+//     .from("monthly_budgets")
+//     .select("available")
+//     .eq("monthly_budget_id", monthlyBudgetId);
 
-  if (error || !data) {
-    console.error("Error fetching monthly available: ", error);
-    return error;
-  }
+//   if (error || !data) {
+//     console.error("Error fetching monthly available: ", error);
+//     return error;
+//   }
 
-  const totalAssigned = data.reduce(
-    (acc: number, curr: { available: number | null }) => {
-      if (curr.available === null) {
-        return acc;
-      }
-      return acc + curr.available;
-    },
-    0,
-  );
+//   const totalAssigned = data.reduce(
+//     (acc: number, curr: { available: number | null }) => {
+//       if (curr.available === null) {
+//         return acc;
+//       }
+//       return acc + curr.available;
+//     },
+//     0,
+//   );
 
-  return totalAssigned;
-}
+//   return totalAssigned;
+// }
 
 // Fetch the available amount for the current month
 // Inputs:
