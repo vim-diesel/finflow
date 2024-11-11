@@ -16,8 +16,9 @@ const config: Config = {
     // ...
     "^@/(.*)$": "<rootDir>/$1",
   },
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   // "transform": {
-  //   "^.+\\.jsx?$": "babel-jest", 
+  //   "^.+\\.jsx?$": "babel-jest",
   //   "^.+\\.tsx?$": "ts-jest"
   // },
 };

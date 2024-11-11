@@ -61,10 +61,7 @@ export default async function Page() {
   );
 
   console.log("currMonthlyBudget", currMonthlyBudget);
-  console.log(
-    "currMonthlyBudget instanceof Error",
-    currMonthlyBudget instanceof Error,
-  );
+
   if (currMonthlyBudget instanceof Error) {
     // We will have to handle this somehow. Create a new budget? Each budget
     // should only have one monthlyBudget row per month.

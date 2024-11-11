@@ -53,8 +53,9 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError) {
-    return Error(authError.message);
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return Error("User authentication failed or user not found");
   }
 
   // Make sure this picks the first budget (lowest budgetId)
@@ -88,9 +89,9 @@ export async function getCurrMonthlyBudget(
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError) {
-    console.error("Error fetching user: ", authError);
-    return Error(authError.message);
+  if (!user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return Error("User authentication failed or user not found");
   }
 
   const today = new Date();
@@ -135,9 +136,11 @@ export async function getCategoriesWithDetails(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
     return Error("User authentication failed or user not found");
   }
 

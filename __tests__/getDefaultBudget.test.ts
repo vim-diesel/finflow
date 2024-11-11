@@ -1,4 +1,6 @@
+import { AuthError } from "@supabase/supabase-js";
 import { getDefaultBudget } from "../app/actions";
+import { createServersideClient } from "@/utils/supabase/server";
 
 type SupabaseClientMock = {
   auth: {
@@ -14,7 +16,6 @@ type SupabaseClientMock = {
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
-import { createServersideClient } from "@/utils/supabase/server";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
@@ -70,23 +71,25 @@ describe("getDefaultBudget", () => {
     const result = await getDefaultBudget();
     expect(result).toBeInstanceOf(Error);
     if (result instanceof Error) {
-      expect(result.message).toBe(
-        "User authentication failed or user not found",
-      );
+      expect(result.message).toBe("User authentication failed or user not found");
     }
   });
 
   it("should return error if there is an error fetching budgets", async () => {
     const mockUser = { id: "user123" };
+    const mockError = new Error("Database error");
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.single.mockResolvedValue({
       data: null,
-      error: new Error("Database error"),
+      error: mockError,
     });
 
     const result = await getDefaultBudget();
     expect(result).toBeInstanceOf(Error);
-    expect(consoleErrorMock).toHaveBeenCalledWith("Error fetching budgets: ", expect.any(Error));
+    if (result instanceof Error) {
+      expect(result.message).toBe("Database error");
+    }
+    expect(consoleErrorMock).toHaveBeenCalledWith("Error fetching budgets: ", mockError);
   });
 });
