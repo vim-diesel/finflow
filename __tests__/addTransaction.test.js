@@ -55,7 +55,7 @@ describe("addTransaction", () => {
       transaction_type: "inflow",
       category_id: null,
       date: expect.any(String),
-      memo: "",
+      note: "",
       cleared: true,
       payee: null,
     });

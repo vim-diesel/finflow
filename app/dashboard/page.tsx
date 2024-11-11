@@ -42,11 +42,6 @@ export default async function Page() {
     // We can check if we need the user to login again.
     // But our middleware should handle this so I'm not gonna worry about it.
 
-    // if (isAuthApiError(budget)) {
-    //   // Redirect to login page
-    //   return <div>Redirect to login page</div>;
-    // }
-
     // We will have to handle this somehow. Depends on the error.
     // Maybe the user has no budget?
     // Or is it a supabase/postgres error.

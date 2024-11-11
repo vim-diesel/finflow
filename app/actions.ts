@@ -221,7 +221,7 @@ export async function addTransaction(
   transactionType: "inflow" | "outflow",
   categoryId?: number,
   date?: Date,
-  memo?: string,
+  note?: string,
   cleared?: boolean,
   payee?: string,
 ): Promise<null | Error> {
@@ -253,7 +253,7 @@ export async function addTransaction(
     date: date
       ? date.toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
-    memo: memo || "",
+    note: note || "",
     cleared: cleared || true,
     payee: payee || null,
   });
