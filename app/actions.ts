@@ -55,23 +55,26 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
     error: authError,
   } = await supabase.auth.getUser();
 
+  // Return our custom error type if there is an auth error from supabase
   if (authError) {
     console.error("Error authenticating user: ", authError?.message);
     return new AppError("AUTH_ERROR", "User authentication failed or user not found", authError?.code);
   }
 
+  // Seperately checking for a missing user (this is probably unecessary, but I like to be sure)
   if (!user) {
     console.error("User not found");
     return new AppError("AUTH_ERROR", "User not found");
   }
 
-  // Make sure this picks the first budget (lowest budgetId)
+  // TODO: Make sure this picks the first budget (lowest budgetId)
   const { data: budget, error } = await supabase
     .from("budgets")
     .select("*")
     .limit(1)
     .single();
 
+  // If there is an error, return our custom error type
   if (error) {
     console.error("Error fetching budgets: ", error);
     return new AppError("PG_ERROR", error.message, error.code);
@@ -86,7 +89,7 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
 // budgetId - the ID of the budget to fetch the current monthly budget for (number)
 //
 // Output: the current monthly budget or an Error
-// monthlyBudget - the current monthly budget (Today) or an Error
+// monthlyBudget - the current monthly budget (Today) 
 export async function getCurrMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | AppError> {
@@ -109,8 +112,8 @@ export async function getCurrMonthlyBudget(
     1,
   );
 
-  // Do we need to use UTC dates here? I think we should be fine with local dates
-
+  // Fetch the current monthly budget
+  // ? Do we need to use UTC dates here? I think we should be fine with local dates
   const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
     .select("*")
@@ -120,7 +123,7 @@ export async function getCurrMonthlyBudget(
     .limit(1)
     .single();
 
-  //Let our Server Component do that error handling, so it can decide to still
+  // Let our Server Component do that error handling, so it can decide to still
   // render the page or not.
   if (error) {
     console.error("Error fetching current monthly budgets: ", error);
@@ -216,9 +219,9 @@ We don't return the data inserted into the table, just null.
 // transactionType - the type of transaction (string)
 // category - the ID of the category of the transaction (number)
 // date - the date of the transaction (Date)
-// memo - the memo of the transaction (string)
+// note - the memo of the transaction (string)
 // cleared - whether the transaction is cleared (boolean)
-// payee - the payee of the transaction (string)
+// payee - the payee of the transaction (string) (this will be its own table in the future)
 //
 // Output: null or an Error
 
@@ -340,42 +343,7 @@ export async function updateAssigned(
   return null;
 }
 
-// export async function getMonthlyAvailable(
-//   monthlyBudgetId: number,
-// ): Promise<number | Error> {
-//   const supabase = createServersideClient();
-//   const {
-//     data: { user },
-//   } = await supabase.auth.getUser();
-
-//   if (!user?.id) {
-//     return Error("User authentication failed or user not found");
-//   }
-
-//   const { data, error } = await supabase
-//     .from("monthly_budgets")
-//     .select("available")
-//     .eq("monthly_budget_id", monthlyBudgetId);
-
-//   if (error || !data) {
-//     console.error("Error fetching monthly available: ", error);
-//     return error;
-//   }
-
-//   const totalAssigned = data.reduce(
-//     (acc: number, curr: { available: number | null }) => {
-//       if (curr.available === null) {
-//         return acc;
-//       }
-//       return acc + curr.available;
-//     },
-//     0,
-//   );
-
-//   return totalAssigned;
-// }
-
-// Fetch the available amount for the current month
+// Fetch the available amount for the given month
 // Inputs:
 // budgetId - the ID of the budget to fetch the available amount for (number)
 // currMonth - the current month (Date)
@@ -386,7 +354,7 @@ export async function updateAssigned(
 // or null, which it probably doesn't have to. We can remove this
 export async function getAvailableAmount(
   budgetId: number,
-  currMonth: Date,
+  month: Date,
 ): Promise<number | null | Error> {
   const supabase = createServersideClient();
   const {
@@ -400,8 +368,8 @@ export async function getAvailableAmount(
   }
 
   // Validate currMonth
-  if (!(currMonth instanceof Date) || isNaN(currMonth.getTime())) {
-    return Error("Invalid date provided");
+  if (!(month instanceof Date) || isNaN(month.getTime())) {
+    return new AppError("ERROR","Invalid date provided");
   }
 
   // Get all transactions up to the current month
@@ -418,7 +386,7 @@ export async function getAvailableAmount(
     .select("*")
     .eq("budget_id", budgetId)
     .eq("user_id", user.id)
-    .lte("date", currMonth.toISOString())
+    .lte("date", month.toISOString())
     .order("date", { ascending: true });
 
   if (transactionsError || !transactions) {
@@ -432,7 +400,7 @@ export async function getAvailableAmount(
     .select("*")
     .eq("budget_id", budgetId)
     .eq("user_id", user.id)
-    .lte("month", currMonth.toISOString())
+    .lte("month", month.toISOString())
     .order("month", { ascending: true });
 
   if (bugdetsError || !monthlyBudgets) {
