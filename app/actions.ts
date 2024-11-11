@@ -8,6 +8,7 @@ import {
   CategoryGroup,
   Transaction,
 } from "./types";
+import { AppError } from "./errors";
 
 // I kind of like the idea of returning null instead of an Error if no rows are found.
 // It's not really an error, just no data. We can handle that in the component.
@@ -43,7 +44,7 @@ If we are calling this function, we need to create one. We will just do it for t
 But we will do it where we called the server action, and create another server 
 action to create a new budget.
 */
-export async function getDefaultBudget(): Promise<Budget | Error> {
+export async function getDefaultBudget(): Promise<Budget | AppError> {
   // Boilerplate code to create a Supabase client
   // (basically configure a new fetch call)
   // must be done anytime you wish to call auth.getUser()
@@ -53,9 +54,9 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (authError) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR", "User authentication failed or user not found", authError?.code);
   }
 
   // Make sure this picks the first budget (lowest budgetId)
@@ -67,7 +68,7 @@ export async function getDefaultBudget(): Promise<Budget | Error> {
 
   if (error) {
     console.error("Error fetching budgets: ", error);
-    return Error(error.message);
+    return new AppError("SUPA_ERROR", error.message, error.code);
   }
 
   revalidatePath("/dashboard");

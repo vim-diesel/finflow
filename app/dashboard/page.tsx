@@ -13,8 +13,7 @@ import {
   CategoryGroup,
   CategoryWithDetails,
 } from "@/app/types";
-import { AuthError, isAuthApiError } from "@supabase/supabase-js";
-import { PostgrestError } from "@supabase/supabase-js";
+import { AppError } from "../errors";
 
 // Sort the category groups by priority (Bills, Needs, Wants, and anything else)
 function sortCategoryGroups(categoryGroups: CategoryGroup[]): CategoryGroup[] {
@@ -35,9 +34,9 @@ export default async function Page() {
   // These steps can probably be condensed into one or two action calls.
   // Find Budget > Find curr MonthlyBudget >
   // > Get Categories joined with Monthly Category Details table > Get CategoryGroups
-  const budget: Budget | Error = await getDefaultBudget();
+  const budget: Budget | AppError = await getDefaultBudget();
 
-  if (budget instanceof Error) {
+  if (budget instanceof AppError) {
 
     // We can check if we need the user to login again.
     // But our middleware should handle this so I'm not gonna worry about it.
@@ -46,7 +45,7 @@ export default async function Page() {
     // Maybe the user has no budget?
     // Or is it a supabase/postgres error.
     // Need to check the error message.
-    return <div>Error fetching budget: {budget.message}</div>;
+    return <div>Error fetching budget: {budget.name}, {budget.message}, {budget.code}</div>;
   }
 
   // Fetch the current monthly budget.
