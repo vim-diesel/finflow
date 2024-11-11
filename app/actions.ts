@@ -131,7 +131,7 @@ export async function getCurrMonthlyBudget(
 // Output: an array of CategoryWithDetails objects or an Error
 // categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
-  currMonthlyBudgetID: number,
+  monthlyBudgetID: number,
 ): Promise<CategoryWithDetails[] | Error> {
   const supabase = createServersideClient();
   const {
@@ -152,7 +152,7 @@ export async function getCategoriesWithDetails(
     monthly_category_details!inner (*)
   `,
     )
-    .eq("monthly_category_details.monthly_budget_id", currMonthlyBudgetID);
+    .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details:", error);
@@ -228,9 +228,11 @@ export async function addTransaction(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
+  if (authError || !user?.id) {
+    console.error("Error authenticating user: ", authError?.message);
     return Error("User authentication failed or user not found");
   }
 
@@ -298,9 +300,11 @@ export async function updateAssigned(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
+  if (authError || !user?.id) {
+    console.error("Error authenticating user: ", authError?.message);
     return Error("User authentication failed or user not found");
   }
 
@@ -373,9 +377,11 @@ export async function getAvailableAmount(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
+  if (authError || !user?.id) {
+    console.error("Error authenticating user: ", authError?.message);
     return Error("User authentication failed or user not found");
   }
 
@@ -469,10 +475,12 @@ export async function createDefaultBudget(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return new Error("User authentication failed or user not found");
+  if (authError || !user?.id) {
+    console.error("Error authenticating user: ", authError?.message);
+    return Error("User authentication failed or user not found");
   }
 
   const { data, error } = await supabase
