@@ -1,4 +1,4 @@
-type ErrorName = "GEN_ERROR" | "SUPA_ERROR" | "AUTH_ERROR";
+type ErrorName = "GEN_ERROR" | "PG_ERROR" | "AUTH_ERROR";
 
 export class AppError extends Error {
   name: ErrorName;

@@ -1,4 +1,4 @@
-import { AuthError } from "@supabase/supabase-js";
+import { AppError } from "@/app/errors";
 import { getDefaultBudget } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 
@@ -66,12 +66,22 @@ describe("getDefaultBudget", () => {
   });
 
   it("should return error if user is not authenticated", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+    // Mock the response to simulate an unauthenticated user
+    const authError = {
+      message: "Authentication session missing",
+      status: 401,
+    };
+
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: authError,
+    });
+
 
     const result = await getDefaultBudget();
-    expect(result).toBeInstanceOf(Error);
-    if (result instanceof Error) {
-      expect(result.message).toBe("User authentication failed or user not found");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("AUTH_ERROR");
     }
   });
 
@@ -90,6 +100,9 @@ describe("getDefaultBudget", () => {
     if (result instanceof Error) {
       expect(result.message).toBe("Database error");
     }
-    expect(consoleErrorMock).toHaveBeenCalledWith("Error fetching budgets: ", mockError);
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      "Error fetching budgets: ",
+      mockError,
+    );
   });
 });

@@ -7,6 +7,7 @@ import {
   CategoryWithDetails,
   CategoryGroup,
   Transaction,
+  MonthlyCategoryDetails,
 } from "./types";
 import { AppError } from "./errors";
 
@@ -59,6 +60,11 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
     return new AppError("AUTH_ERROR", "User authentication failed or user not found", authError?.code);
   }
 
+  if (!user) {
+    console.error("User not found");
+    return new AppError("AUTH_ERROR", "User not found");
+  }
+
   // Make sure this picks the first budget (lowest budgetId)
   const { data: budget, error } = await supabase
     .from("budgets")
@@ -68,7 +74,7 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
 
   if (error) {
     console.error("Error fetching budgets: ", error);
-    return new AppError("SUPA_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   revalidatePath("/dashboard");
@@ -83,7 +89,7 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
 // monthlyBudget - the current monthly budget (Today) or an Error
 export async function getCurrMonthlyBudget(
   budgetId: number,
-): Promise<MonthlyBudget | Error> {
+): Promise<MonthlyBudget | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -92,7 +98,7 @@ export async function getCurrMonthlyBudget(
 
   if (!user) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR", "User authentication failed or user not found", authError?.code);
   }
 
   const today = new Date();
@@ -118,7 +124,7 @@ export async function getCurrMonthlyBudget(
   // render the page or not.
   if (error) {
     console.error("Error fetching current monthly budgets: ", error);
-    return Error(error.message);
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   revalidatePath("/dashboard");
@@ -269,27 +275,34 @@ export async function addTransaction(
 
 export async function getTransactions(
   budgetId: number,
-): Promise<Transaction[] | Error> {
+): Promise<Transaction[] | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return Error("User authentication failed or user not found");
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError(
+      "AUTH_ERROR",
+      "User authentication failed or user not found",
+      authError?.code,
+    );
   }
 
-  const { data, error } = await supabase
+  const { data: transactions, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("budget_id", budgetId);
+    .eq("budget_id", budgetId)
+    .order("date", { ascending: false });
 
-  if (error || !data) {
+  if (error) {
     console.error("Error fetching transactions: ", error);
-    return error;
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
-  return data;
+  return transactions;
 }
 
 // Updates the assigned amount for a category in a monthly budget
@@ -496,4 +509,100 @@ export async function createDefaultBudget(
   }
 
   return data;
+}
+
+export async function getMonthlyCategoryDetails(
+  budgetId: number,
+  month: string,
+): Promise<MonthlyCategoryDetails[] | AppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError(
+      "AUTH_ERROR",
+      "User authentication failed or user not found",
+      authError?.code,
+    );
+  }
+
+  const { data: details, error } = await supabase
+    .from("monthly_category_details")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .eq("month", month);
+
+  if (error) {
+    console.error("Error fetching monthly category details: ", error);
+    return new AppError("PG_ERROR", error.message, error.code);
+  }
+
+  return details;
+}
+
+export async function calculateAvailableAmount(
+  budgetId: number,
+  month: string,
+): Promise<number | AppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError(
+      "AUTH_ERROR",
+      "User authentication failed or user not found",
+      authError?.code,
+    );
+  }
+
+  const { data: transactions, error: transactionError } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .lte("date", month);
+
+  if (transactionError || !transactions) {
+    console.error("Error fetching transactions: ", transactionError);
+    return new AppError(
+      "PG_ERROR",
+      transactionError.message,
+      transactionError.code,
+    );
+  }
+
+  const { data: monthlyCategoryDetails, error: categoryError } = await supabase
+    .from("monthly_category_details")
+    .select("*")
+    .eq("budget_id", budgetId)
+    .eq("month", month);
+
+  if (categoryError || !monthlyCategoryDetails) {
+    console.error("Error fetching monthly category details: ", categoryError);
+    return new AppError("PG_ERROR", categoryError.message, categoryError.code);
+  }
+
+  const totalInflow = transactions
+    .filter((t) => t.transaction_type === "inflow")
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const totalAssigned = monthlyCategoryDetails.reduce(
+    (acc, curr) => acc + Number(curr.amount_assigned),
+    0,
+  );
+
+  const totalUncategorizedOutflow = transactions
+    .filter((t) => t.transaction_type === "outflow" && !t.category_id)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const availableAmount = totalInflow - totalAssigned - totalUncategorizedOutflow;
+
+  return availableAmount;
 }
