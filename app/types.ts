@@ -1,4 +1,5 @@
 import { Tables } from "@/database.types";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export type Budget = Tables<"budgets">;
 export type MonthlyBudget = Tables<"monthly_budgets">;

@@ -18,16 +18,21 @@ export default async function HeadingBar({
     month: "long",
   });
 
+  // console.log("monthlyBudget", monthlyBudget);
+  const currMonth = new Date(monthlyBudget.month);
+  // if (isNaN(currMonth.getTime())) {
+  //   return <Heading level={2}>Invalid date</Heading>;
+  // }
+
   const available = await getAvailableAmount(
     monthlyBudget.budget_id,
-    new Date(monthlyBudget.month),
+    new Date(),
   );
 
   if (available instanceof Error) {
     return <Heading level={2}>Error fetching available amount</Heading>;
-  }
+  } 
 
-  console.log("available", available);
 
   return (
     <div className="w-full border-b border-gray-400 md:flex md:items-center md:justify-between">

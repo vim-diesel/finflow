@@ -9,6 +9,9 @@ import {
   Transaction,
 } from "./types";
 
+// I kind of like the idea of returning null instead of an Error if no rows are found.
+// It's not really an error, just no data. We can handle that in the component.
+
 /************************************************************
 getCurrMonthlyBudget needs tests for:
 Valid date range queries
@@ -40,17 +43,18 @@ If we are calling this function, we need to create one. We will just do it for t
 But we will do it where we called the server action, and create another server 
 action to create a new budget.
 */
-export async function getDefaultBudget(): Promise<Budget | null | Error> {
+export async function getDefaultBudget(): Promise<Budget | Error> {
   // Boilerplate code to create a Supabase client
   // (basically configure a new fetch call)
   // must be done anytime you wish to call auth.getUser()
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return Error("User authentication failed or user not found");
+  if (authError) {
+    return Error(authError.message);
   }
 
   // Make sure this picks the first budget (lowest budgetId)
@@ -62,11 +66,7 @@ export async function getDefaultBudget(): Promise<Budget | null | Error> {
 
   if (error) {
     console.error("Error fetching budgets: ", error);
-    return error;
-  }
-
-  if (!budget || budget === null) {
-    return null;
+    return Error(error.message);
   }
 
   revalidatePath("/dashboard");
@@ -85,10 +85,12 @@ export async function getCurrMonthlyBudget(
   const supabase = createServersideClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return Error("User authentication failed or user not found");
+  if (authError) {
+    console.error("Error fetching user: ", authError);
+    return Error(authError.message);
   }
 
   const today = new Date();
@@ -114,7 +116,7 @@ export async function getCurrMonthlyBudget(
   // render the page or not.
   if (error) {
     console.error("Error fetching current monthly budgets: ", error);
-    return error;
+    return Error(error.message);
   }
 
   revalidatePath("/dashboard");
@@ -151,7 +153,7 @@ export async function getCategoriesWithDetails(
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details:", error);
-    return error;
+    return Error(error?.message || "Error fetching categories with details");
   }
 
   // Map over the data to flatten `monthly_category_details` to a single object
@@ -364,7 +366,7 @@ export async function updateAssigned(
 export async function getAvailableAmount(
   budgetId: number,
   currMonth: Date,
-): Promise<number | Error | null> {
+): Promise<number | null | Error> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -372,6 +374,11 @@ export async function getAvailableAmount(
 
   if (!user?.id) {
     return Error("User authentication failed or user not found");
+  }
+
+  // Validate currMonth
+  if (!(currMonth instanceof Date) || isNaN(currMonth.getTime())) {
+    return Error("Invalid date provided");
   }
 
   // Get all transactions up to the current month

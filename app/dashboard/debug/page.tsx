@@ -18,6 +18,7 @@ export default function DebugPage() {
 
   return (
     <div>
+      <h5>getDefaultBudget()</h5>
       <pre>
         {JSON.stringify(
           {
