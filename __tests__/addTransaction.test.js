@@ -1,3 +1,4 @@
+import { AppError } from "@/app/errors";
 import { addTransaction } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 
@@ -8,7 +9,6 @@ jest.mock("@/utils/supabase/server", () => ({
 
 describe("addTransaction", () => {
   let mockSupabase;
-  // test commit
 
   beforeEach(() => {
     mockSupabase = {
@@ -65,7 +65,8 @@ describe("addTransaction", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
 
     const result = await addTransaction(1, 100, "inflow");
-    expect(result).toBeInstanceOf(Error);
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.name).toBe("AUTH_ERROR");
     expect(result.message).toBe("User authentication failed or user not found");
   });
 
@@ -74,7 +75,8 @@ describe("addTransaction", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
 
     const result = await addTransaction(1, -100, "inflow");
-    expect(result).toBeInstanceOf(Error);
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.name).toBe("ERROR");
     expect(result.message).toBe("Transaction amount must be non-negative");
   });
 
@@ -83,7 +85,8 @@ describe("addTransaction", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
 
     const result = await addTransaction(1, 100, "INVALID_TYPE");
-    expect(result).toBeInstanceOf(Error);
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.name).toBe("ERROR");
     expect(result.message).toBe("Invalid transaction type");
   });
 
