@@ -234,7 +234,7 @@ export async function addTransaction(
   note?: string,
   cleared?: boolean,
   payee?: string,
-): Promise<null | Error> {
+): Promise<null | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -243,15 +243,15 @@ export async function addTransaction(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code);
   }
 
   if (amount < 0) {
-    return Error("Transaction amount must be non-negative");
+    return new AppError("ERROR","Transaction amount must be non-negative");
   }
 
   if (transactionType !== "inflow" && transactionType !== "outflow") {
-    return Error("Invalid transaction type");
+    return new AppError("ERROR","Invalid transaction type");
   }
 
   const { error } = await supabase.from("transactions").insert({
@@ -270,7 +270,7 @@ export async function addTransaction(
 
   if (error) {
     console.error("Error inserting transaction: ", error);
-    return error;
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   return null;
