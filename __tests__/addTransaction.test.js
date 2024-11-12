@@ -95,11 +95,17 @@ describe("addTransaction", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.insert.mockResolvedValue({
       data: null,
-      error: new Error("Database error"),
+      error: {
+        message: "Database error",
+        details: "Some detailed error message",
+        hint: null,
+        code: "23505",
+      },
     });
 
     const result = await addTransaction(1, 100, "inflow");
-    expect(result).toBeInstanceOf(Error);
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.name).toBe("PG_ERROR");
     expect(result.message).toBe("Database error");
   });
 });
