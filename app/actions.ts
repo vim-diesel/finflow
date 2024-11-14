@@ -10,6 +10,7 @@ import {
   MonthlyCategoryDetails,
 } from "./types";
 import { AppError } from "./errors";
+import App from "next/app";
 
 // I kind of like the idea of returning null instead of an Error if no rows are found.
 // It's not really an error, just no data. We can handle that in the component.
@@ -19,6 +20,14 @@ getCurrMonthlyBudget needs tests for:
 Valid date range queries
 No budget found for date range
 Multiple budgets found error
+
+addTransaction needs tests for:
+Valid transaction types
+Invalid transaction types
+Negative amounts
+Invalid dates
+Invalid category
+
 
 getCategoriesWithDetails needs tests for:
 Successful flattening of nested data
@@ -142,7 +151,7 @@ export async function getCurrMonthlyBudget(
 // categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
   monthlyBudgetID: number,
-): Promise<CategoryWithDetails[] | Error> {
+): Promise<CategoryWithDetails[] | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -151,7 +160,7 @@ export async function getCategoriesWithDetails(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code, authError?.status);
   }
 
   const { data: categoriesWithDetails, error } = await supabase
@@ -181,15 +190,17 @@ export async function getCategoriesWithDetails(
 
 export async function getCategoryGroups(
   budgetId: number,
-): Promise<CategoryGroup[] | Error> {
+): Promise<CategoryGroup[] | AppError> {
   const supabase = createServersideClient();
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return Error("User authentication failed or user not found");
+  if (authError || !user?.id) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code, authError?.status);
   }
 
   const { data, error } = await supabase
@@ -199,7 +210,7 @@ export async function getCategoryGroups(
 
   if (error || !data) {
     console.error("Error fetching category groups: ", error);
-    return error;
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   return data;
@@ -313,7 +324,7 @@ export async function updateAssigned(
   monthlyBudgetId: number,
   categoryId: number,
   amountAssigned: number,
-): Promise<null | Error> {
+): Promise<null | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -322,11 +333,11 @@ export async function updateAssigned(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code, authError?.status);
   }
 
   if (amountAssigned < 0) {
-    return Error("Assigned amount must be non-negative");
+    return new AppError("ERROR","Assigned amount must be non-negative");
   }
 
   const { error } = await supabase
@@ -337,12 +348,14 @@ export async function updateAssigned(
 
   if (error) {
     console.error("Error updating assigned amount: ", error);
-    return error;
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   return null;
 }
 
+
+// TODO: If there are no rows from the query, we should return null instead of continuing with empty arrays.
 // Fetch the available amount for the given month
 // Inputs:
 // budgetId - the ID of the budget to fetch the available amount for (number)
@@ -351,11 +364,11 @@ export async function updateAssigned(
 // Output: the available amount (number) or an Error
 // availableAmount - the total available amount for the current month
 // or an Error
-// or null, which it probably doesn't have to. We can remove this
+// or null, which it probably doesn't have to. We can remove this if it doesn't get used.
 export async function getAvailableAmount(
   budgetId: number,
   month: Date,
-): Promise<number | null | Error> {
+): Promise<number | null | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -364,7 +377,7 @@ export async function getAvailableAmount(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code, authError?.status);
   }
 
   // Validate currMonth
@@ -381,7 +394,7 @@ export async function getAvailableAmount(
 
   // To display this months current Available amount, we need all transactions
   // from this month and all previous months.
-  let { data: transactions, error: transactionsError } = await supabase
+  const { data: transactions, error: transactionsError } = await supabase
     .from("transactions")
     .select("*")
     .eq("budget_id", budgetId)
@@ -389,9 +402,14 @@ export async function getAvailableAmount(
     .lte("date", month.toISOString())
     .order("date", { ascending: true });
 
-  if (transactionsError || !transactions) {
+    // Pretty sure if there are no transactions then Supabase just throws an error,
+    // making the second if statement redundant.
+    // TODO: Check if this is true and remove the second if statement.
+  if (transactionsError) {
     console.error("Error fetching transactions: ", transactionsError);
-    return transactionsError;
+    return new AppError("PG_ERROR", transactionsError?.message, transactionsError?.code);
+  } else if (!transactions) {
+    return null;
   }
 
   // Get all monthly budgets up to the current month
@@ -403,9 +421,13 @@ export async function getAvailableAmount(
     .lte("month", month.toISOString())
     .order("month", { ascending: true });
 
-  if (bugdetsError || !monthlyBudgets) {
+    // Same here.
+    // TODO: Check if this is true and remove the second if statement.
+  if (bugdetsError) {
     console.error("Error fetching monthly budgets: ", bugdetsError);
-    return bugdetsError;
+    return new AppError("PG_ERROR", bugdetsError.message, bugdetsError.code);
+  } else if (!monthlyBudgets) {
+    return null;
   }
 
   // Get all monthly category details up to the current month
@@ -419,14 +441,19 @@ export async function getAvailableAmount(
     )
     .order("monthly_budget_id", { ascending: true });
 
-  if (categoryError || !monthlyCategoryDetails) {
+    // TODO: Same here.
+  if (categoryError) {
     console.error("Error fetching monthly category details: ", categoryError);
-    return categoryError;
+    return new AppError("PG_ERROR", categoryError.message, categoryError.code);
+  } else if (!monthlyCategoryDetails) {
+    return null;
   }
 
   //  We'll sum up all previous inflow transactions, subtract the amount
   // assigned to all categories, and subtract previous uncategorized outflow.
   // This will give us the available amount for the current month.
+  // TODO: This is a lot of calculations. We should probably break this up into
+  // TODO: smaller functions. Also, tests. 
 
   // Total inflow
   const totalInflow = transactions
