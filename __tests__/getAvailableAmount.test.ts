@@ -1,21 +1,27 @@
-// This is just a backup, in case the Typescript version gets too
-// complex. This is the original Javascript version of the test.
-
-// import { getAvailableAmount } from "../app/actions";
-// import { createServersideClient } from "@/utils/supabase/server";
+import { AppError } from "@/app/errors";
+import { getAvailableAmount } from "../app/actions";
+import { createServersideClient } from "@/utils/supabase/server";
+import { PostgrestError } from "@supabase/supabase-js";
 
 // It seems we need seperate tests to test the error being returned from each
 // database query. This is because the function returns after the first error
 // and the other queries are not executed.
 
 // Mock the Supabase client
-/* jest.mock("@/utils/supabase/server", () => ({
+jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
 }));
 
-describe("getAvailableAmount", () => {
-  let mockSupabase;
-  let consoleErrorMock;
+type SupabaseClientMock = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+};
+
+describe("getAvailableAmountTS", () => {
+  let mockSupabase: SupabaseClientMock;
+  let consoleErrorMock: jest.SpyInstance;
 
   // Common mock data
   const mockData = {
@@ -32,7 +38,18 @@ describe("getAvailableAmount", () => {
   };
 
   // Helper function to create mock database responses
-  const createMockTableResponse = (data, error = null) => ({
+  interface MockTableResponse {
+    from: jest.Mock;
+    select: jest.Mock;
+    eq: jest.Mock;
+    lte: jest.Mock;
+    order: jest.Mock;
+  }
+
+  const createMockTableResponse = (
+    data: MockTableResponse,
+    error: PostgrestError | null = null,
+  ): MockTableResponse => ({
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
@@ -41,8 +58,10 @@ describe("getAvailableAmount", () => {
   });
 
   // Helper function to mock database calls
-  const mockDatabaseCalls = (tableResponses) => {
-    return (table) => {
+  const mockDatabaseCalls = (tableResponses: {
+    [key: string]: { data: any; error: PostgrestError | null };
+  }) => {
+    return (table: string): MockTableResponse => {
       const response = tableResponses[table];
       return createMockTableResponse(response.data, response.error);
     };
@@ -57,7 +76,7 @@ describe("getAvailableAmount", () => {
       },
       from: jest.fn(),
     };
-    createServersideClient.mockReturnValue(mockSupabase);
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
     consoleErrorMock = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -70,9 +89,9 @@ describe("getAvailableAmount", () => {
   it("should return the available amount for a valid budget and month", async () => {
     mockSupabase.from.mockImplementation(
       mockDatabaseCalls({
-        transactions: { data: mockData.transactions },
-        monthly_budgets: { data: mockData.monthlyBudgets },
-        monthly_category_details: { data: mockData.monthlyCategoryDetails },
+        transactions: { data: mockData.transactions, error: null },
+        monthly_budgets: { data: mockData.monthlyBudgets , error: null },
+        monthly_category_details: { data: mockData.monthlyCategoryDetails, error: null },
       }),
     );
 
@@ -84,17 +103,33 @@ describe("getAvailableAmount", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
 
     const result = await getAvailableAmount(1, new Date());
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("User authentication failed or user not found");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("AUTH_ERROR");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
+    }
   });
 
-  const testDatabaseError = (tableName) => {
+  const testDatabaseError = (tableName: string) => {
     it(`should handle database errors on ${tableName} table`, async () => {
-      const dbError = new Error("Database error");
-      const tableResponses = {
-        transactions: { data: mockData.transactions },
-        monthly_budgets: { data: mockData.monthlyBudgets },
-        monthly_category_details: { data: mockData.monthlyCategoryDetails },
+      const dbError: PostgrestError = {
+        message: "Database error",
+        code: "42P01",
+        details: "42P01",
+        hint: "",
+        name: "PostgrestError",
+      };
+      const tableResponses: {
+        [key: string]: { data: any; error: PostgrestError | null };
+      } = {
+        transactions: { data: mockData.transactions, error: null },
+        monthly_budgets: { data: mockData.monthlyBudgets, error: null },
+        monthly_category_details: {
+          data: mockData.monthlyCategoryDetails,
+          error: null,
+        },
       };
 
       // Override the specific table with error
@@ -103,8 +138,11 @@ describe("getAvailableAmount", () => {
       mockSupabase.from.mockImplementation(mockDatabaseCalls(tableResponses));
 
       const result = await getAvailableAmount(1, new Date());
-      expect(result).toBeInstanceOf(Error);
-      expect(result.message).toBe("Database error");
+      expect(result).toBeInstanceOf(AppError);
+      if (result instanceof AppError) {
+        expect(result.name).toBe("PG_ERROR");
+        expect(result.message).toBe("Database error");
+      }
       expect(consoleErrorMock).toHaveBeenCalledWith(
         `Error fetching ${tableName.replace(/_/g, " ")}: `,
         dbError,
@@ -116,4 +154,3 @@ describe("getAvailableAmount", () => {
     testDatabaseError,
   );
 });
- */
