@@ -6,11 +6,13 @@ export class AppError extends Error {
   name: ErrorName;
   message: string;
   code: string;
+  status: number
 
-  constructor(name: ErrorName, message: string, code: string = "UNKNOWN_CODE") {
+  constructor(name: ErrorName, message: string, code: string = "UNKNOWN_CODE", status: number = 500) {
     super(message);
     this.name = name;
     this.message = message;
     this.code = code;
+    this.status = status;
   }
 }

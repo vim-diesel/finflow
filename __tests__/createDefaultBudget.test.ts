@@ -9,9 +9,20 @@ jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(), 
 }));
 
+// Define the structure of the mocked Supabase client
+type SupabaseClientMock = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+  insert: jest.Mock;
+  select: jest.Mock;
+  single: jest.Mock;
+};
+
 describe("createDefaultBudget", () => {
-  let mockSupabase;
-  let consoleErrorMock;
+  let mockSupabase: SupabaseClientMock;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeEach(() => {
     mockSupabase = {
@@ -23,7 +34,7 @@ describe("createDefaultBudget", () => {
       select: jest.fn().mockReturnThis(),
       single: jest.fn(),
     };
-    createServersideClient.mockReturnValue(mockSupabase);
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
     consoleErrorMock = jest
       .spyOn(console, "error")
@@ -63,7 +74,7 @@ describe("createDefaultBudget", () => {
 
     const result = await createDefaultBudget();
 
-    expect(result).toBeInstanceOf(Error);
+    expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe("User authentication failed or user not found");
   });
 

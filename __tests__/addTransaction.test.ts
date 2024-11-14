@@ -1,7 +1,7 @@
 import { AppError } from "@/app/errors";
 import { addTransaction } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
-import { PostgrestError } from "@supabase/supabase-js";
+import { AuthError, PostgrestError } from "@supabase/supabase-js";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
@@ -87,13 +87,7 @@ describe("addTransaction", () => {
   });
 
   it("should return AppError if user is not authenticated", async () => {
-    const authError: PostgrestError = {
-      name: "PostgrestError",
-      message: "Authentication session missing",
-      code: "401", // Example Postgres error code for unauthorized
-      details: '',
-      hint: '',
-    };
+    const authError = new AuthError("Authentication session missing", 401);
 
     // Mock authentication to simulate an unauthenticated user
     mockSupabase.auth.getUser.mockResolvedValue({
@@ -109,7 +103,8 @@ describe("addTransaction", () => {
     if (result instanceof AppError) {
       expect(result.name).toBe("AUTH_ERROR");
       expect(result.message).toBe("User authentication failed or user not found");
-      expect(result.code).toBe("401");
+      expect(result.code).toBe("UNKNOWN_CODE");
+      expect(result.status).toBe(500);
     }
 
     // Verify that console.error was called with the correct message
