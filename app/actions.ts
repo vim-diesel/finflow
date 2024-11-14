@@ -175,7 +175,7 @@ export async function getCategoriesWithDetails(
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details:", error);
-    return Error(error?.message || "Error fetching categories with details");
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   // Map over the data to flatten `monthly_category_details` to a single object
