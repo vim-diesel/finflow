@@ -70,7 +70,8 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
     return new AppError("AUTH_ERROR", "User authentication failed or user not found", authError?.code);
   }
 
-  // Seperately checking for a missing user (this is probably unecessary, but I like to be sure)
+  // Seperately checking for a missing user (this is probably unecessary)
+  // TODO: Remove this if we are confident that authError will always be thrown
   if (!user) {
     console.error("User not found");
     return new AppError("AUTH_ERROR", "User not found");
@@ -99,6 +100,7 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
 //
 // Output: the current monthly budget or an Error
 // monthlyBudget - the current monthly budget (Today) 
+// TODO: store Month as an int: 202411. Divide by 100 for year, %100 for month. Sortable and comparable.
 export async function getCurrMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | AppError> {
@@ -122,7 +124,7 @@ export async function getCurrMonthlyBudget(
   );
 
   // Fetch the current monthly budget
-  // ? Do we need to use UTC dates here? I think we should be fine with local dates
+  // ? Do we need to use UTC dates here? I think we should be fine with local dates. 
   const { data: monthlyBudget, error } = await supabase
     .from("monthly_budgets")
     .select("*")
@@ -133,7 +135,7 @@ export async function getCurrMonthlyBudget(
     .single();
 
   // Let our Server Component do that error handling, so it can decide to still
-  // render the page or not.
+  // render the page or not. Or it can create one. 
   if (error) {
     console.error("Error fetching current monthly budgets: ", error);
     return new AppError("PG_ERROR", error.message, error.code);

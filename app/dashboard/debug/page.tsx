@@ -1,23 +1,26 @@
 "use client";
+import React from "react";
+import { Budget, MonthlyBudget, Transaction } from "@/app/types";
+import { AppError } from "@/app/errors";
 import {
   addTransaction,
   getDefaultBudget,
+  getCurrMonthlyBudget,
   getTransactions,
 } from "@/app/actions";
-import React from "react";
-
-import { Budget, Transaction } from "@/app/types";
 
 // app/debug/page.tsx
 export default function DebugPage() {
-  const [budget, setBudget] = React.useState<Budget | Error | null>(null);
+  const [budget, setBudget] = React.useState<Budget | AppError | null>(null);
   const [transactions, setTransactions] = React.useState<
-    Transaction[] | Error | null
+    Transaction[] | AppError | null
+  >(null);
+  const [currMonthlyBudget, setCurrMonthlyBudget] = React.useState<
+    MonthlyBudget | AppError | null
   >(null);
 
   React.useEffect(() => {
     async function fetchBudget() {
-      console.log("fetchBudget called within useEffect");
       const res = await getDefaultBudget();
       setBudget(res);
     }
@@ -26,12 +29,16 @@ export default function DebugPage() {
 
   React.useEffect(() => {
     async function fetchTransactions(budgetId: number) {
-      console.log("fetchTransactions called within useEffect");
       const res = await getTransactions(budgetId);
       setTransactions(res);
     }
-    if (budget && !(budget instanceof Error)) {
+    async function fetchCurrMonthlyBudget(budgetId: number) {
+      const res = await getCurrMonthlyBudget(budgetId);
+      setCurrMonthlyBudget(res);
+    }
+    if (budget && !(budget instanceof AppError)) {
       fetchTransactions(budget.id);
+      fetchCurrMonthlyBudget(budget.id);
     }
   }, [budget]);
 
@@ -42,9 +49,6 @@ export default function DebugPage() {
     const formData = new FormData(form);
     const amount = parseFloat(formData.get("amount") as string) || 0;
 
-    console.log("formdataAmount: ", formData.get("amount"));
-    console.log("parsed amount: ", amount);
-
     if (budget && !(budget instanceof Error)) {
       addTransaction(budget.id, amount, "inflow");
       const res = await getTransactions(budget.id);
@@ -53,35 +57,59 @@ export default function DebugPage() {
   }
 
   return (
-    <div>
-      <h5>getDefaultBudget()</h5>
-      <pre>
-        {JSON.stringify(
-          {
-            result: budget,
-            type: typeof budget,
-            isError: budget instanceof Error,
-            isNull: budget === null,
-          },
-          null,
-          2,
+    <div className="p-4">
+      <section className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold">Budget</h2>
+        <pre className="rounded bg-gray-100 p-4">
+          {JSON.stringify(
+            {
+              budget,
+              isError: budget instanceof AppError,
+              isNull: budget === null,
+            },
+            null,
+            2,
+          )}
+        </pre>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold">Current Monthly Budget</h2>
+        <pre className="rounded bg-gray-100 p-4">
+          {JSON.stringify(currMonthlyBudget, null, 2)}
+        </pre>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
+        {transactions && !(transactions instanceof Error) ? (
+          transactions.map((tx) => (
+            <pre key={tx.id} className="mb-2 rounded bg-gray-100 p-4">
+              TxID: {tx.id} --- Amount: {tx.amount}
+            </pre>
+          ))
+        ) : (
+          <pre className="rounded bg-gray-100 p-4">[]</pre>
         )}
-      </pre>
-      <h5>Transactions</h5>
-      {transactions && !(transactions instanceof Error) ? (
-        transactions.map((tx) => (
-          <pre key={tx.id}>
-            TxID: {tx.id} --- Amount: {tx.amount}
-          </pre>
-        ))
-      ) : (
-        <pre>[]</pre>
-      )}
-      <h5>Add tx</h5>
-      <form onSubmit={handleTransaction}>
-        <input type="number" name="amount" placeholder="Amount" />
-        <button type="submit">Add</button>
-      </form>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-2xl font-bold">Add Transaction</h2>
+        <form onSubmit={handleTransaction} className="space-y-4">
+          <input
+            type="number"
+            name="amount"
+            placeholder="Amount"
+            className="w-full rounded border p-2"
+          />
+          <button
+            type="submit"
+            className="w-full rounded bg-blue-500 p-2 text-white"
+          >
+            Add
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
