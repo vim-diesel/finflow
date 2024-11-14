@@ -1,18 +1,33 @@
 import { getCurrMonthlyBudget } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
+import { PostgrestError } from "@supabase/supabase-js";
+import { AppError } from "@/app/errors";
 
 // Mock the Supabase client and Next.js cache functions
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
 }));
 
-jest.mock('next/cache', () => ({
+jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
+type SupabaseClientMock = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+  select: jest.Mock;
+  eq: jest.Mock;
+  gte: jest.Mock;
+  lt: jest.Mock;
+  limit: jest.Mock;
+  single: jest.Mock;
+};
+
 describe("getCurrMonthlyBudget", () => {
-  let mockSupabase;
-  let consoleErrorMock;
+  let mockSupabase: SupabaseClientMock;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeEach(() => {
     mockSupabase = {
@@ -27,7 +42,8 @@ describe("getCurrMonthlyBudget", () => {
       limit: jest.fn().mockReturnThis(),
       single: jest.fn(),
     };
-    createServersideClient.mockReturnValue(mockSupabase);
+
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
     consoleErrorMock = jest
       .spyOn(console, "error")
@@ -64,13 +80,24 @@ describe("getCurrMonthlyBudget", () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
 
     const result = await getCurrMonthlyBudget(1);
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("User authentication failed or user not found");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("AUTH_ERROR");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
+    }
   });
 
   it("should handle database errors", async () => {
     const mockUser = { id: "user123" };
-    const dbError = new Error("Database error");
+    const dbError: PostgrestError = {
+      name: "Postgrest error",
+      message: "Database error",
+      code: "42501",
+      details: "",
+      hint: "",
+    };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.single.mockResolvedValue({
@@ -79,11 +106,14 @@ describe("getCurrMonthlyBudget", () => {
     });
 
     const result = await getCurrMonthlyBudget(1);
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("Database error");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("PG_ERROR");
+      expect(result.message).toBe("Database error");
+    }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error fetching current monthly budgets: ",
-      dbError
+      dbError,
     );
   });
 });

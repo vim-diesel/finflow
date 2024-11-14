@@ -1,6 +1,7 @@
 import { AppError } from "@/app/errors";
 import { getDefaultBudget } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
+import { AuthError } from "@supabase/supabase-js";
 
 type SupabaseClientMock = {
   auth: {
@@ -67,16 +68,12 @@ describe("getDefaultBudget", () => {
 
   it("should return error if user is not authenticated", async () => {
     // Mock the response to simulate an unauthenticated user
-    const authError = {
-      message: "Authentication session missing",
-      status: 401,
-    };
+    const mockAuthError = new AuthError("Authentication session missing", 401);
 
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: null },
-      error: authError,
+      error: mockAuthError,
     });
-
 
     const result = await getDefaultBudget();
     expect(result).toBeInstanceOf(AppError);
@@ -87,22 +84,23 @@ describe("getDefaultBudget", () => {
 
   it("should return error if there is an error fetching budgets", async () => {
     const mockUser = { id: "user123" };
-    const mockError = new Error("Database error");
+    const mockPGError = new AppError("PG_ERROR", "Database error", "PG500", 500);
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.single.mockResolvedValue({
       data: null,
-      error: mockError,
+      error: mockPGError,
     });
 
     const result = await getDefaultBudget();
-    expect(result).toBeInstanceOf(Error);
-    if (result instanceof Error) {
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("PG_ERROR");
       expect(result.message).toBe("Database error");
     }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error fetching budgets: ",
-      mockError,
+      mockPGError,
     );
   });
 });

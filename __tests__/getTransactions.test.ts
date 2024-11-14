@@ -2,15 +2,26 @@ import { getTransactions } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 import { AppError } from "../app/errors";
 import { PostgrestError } from "@supabase/supabase-js";
+import { Transaction } from "@/app/types";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
 }));
 
+type SupabaseClientMock = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+  select: jest.Mock;
+  eq: jest.Mock;
+  order: jest.Mock;
+};
+
 describe("getTransactions", () => {
-  let mockSupabase;
-  let consoleErrorMock;
+  let mockSupabase: SupabaseClientMock;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeEach(() => {
     mockSupabase = {
@@ -22,7 +33,7 @@ describe("getTransactions", () => {
       eq: jest.fn().mockReturnThis(),
       order: jest.fn(),
     };
-    createServersideClient.mockReturnValue(mockSupabase);
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
     // Mock console.error to suppress error messages in test output
     consoleErrorMock = jest
@@ -58,9 +69,6 @@ describe("getTransactions", () => {
       error: null,
     });
 
-    mockSupabase.from.mockReturnThis();
-    mockSupabase.select.mockReturnThis();
-    mockSupabase.eq.mockReturnThis();
     mockSupabase.order.mockResolvedValue({
       data: mockTransactions,
       error: null,
@@ -91,17 +99,22 @@ describe("getTransactions", () => {
     const result = await getTransactions(1);
 
     expect(result).toBeInstanceOf(AppError);
-    expect(result.name).toBe("AUTH_ERROR");
-    expect(result.message).toBe("User authentication failed or user not found");
+    if (result instanceof AppError) {
+      expect(result.name).toBe("AUTH_ERROR");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
+    }
   });
 
   it("should handle database errors", async () => {
     const mockUser = { id: "user123" };
-    const mockError = {
+    const mockError: PostgrestError = {
+      name: "Postgrest error",
       message: "Database error",
       code: "42501", // Example Postgres error code for insufficient privilege
-      details: null,
-      hint: null,
+      details: "",
+      hint: "",
     };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
@@ -113,17 +126,21 @@ describe("getTransactions", () => {
     const result = await getTransactions(1);
 
     expect(result).toBeInstanceOf(AppError);
-    expect(result.name).toBe("PG_ERROR");
-    expect(result.message).toBe("Database error");
+    if (result instanceof AppError) {
+      expect(result.name).toBe("PG_ERROR");
+      expect(result.message).toBe("Database error");
+    }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error fetching transactions: ",
-      mockError
+      mockError,
     );
   });
 
+  // I'm almost positive Supabase returns error if no rows are found.
+  // TODO: test if this is needed, or test to make sure it returns error.
   it("should handle empty result set", async () => {
     const mockUser = { id: "user123" };
-    const mockTransactions = [];
+    const mockTransactions: Transaction[] = [];
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.order.mockResolvedValue({

@@ -1,5 +1,8 @@
 import { getCategoriesWithDetails } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
+import { AppError } from "@/app/errors";
+import { AuthError, PostgrestError } from "@supabase/supabase-js";
+import { CategoryWithDetails } from "@/app/types";
 
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
@@ -9,9 +12,19 @@ jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
+// Define the structure of the mocked Supabase client
+type SupabaseClientMock = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+  select: jest.Mock;
+  eq: jest.Mock;
+};
+
 describe("getCategoriesWithDetails", () => {
-  let mockSupabase;
-  let consoleErrorMock;
+  let mockSupabase: SupabaseClientMock;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeEach(() => {
     mockSupabase = {
@@ -22,7 +35,7 @@ describe("getCategoriesWithDetails", () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn(),
     };
-    createServersideClient.mockReturnValue(mockSupabase);
+    (createServersideClient as jest.Mock).mockReturnValue(mockSupabase);
 
     consoleErrorMock = jest
       .spyOn(console, "error")
@@ -84,17 +97,29 @@ describe("getCategoriesWithDetails", () => {
   });
 
   it("should reject unauthenticated users", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+    const mockAuthError = new AuthError("Authentication session missing", 401);
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: mockAuthError });
 
     const result = await getCategoriesWithDetails(1);
 
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("User authentication failed or user not found");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("AUTH_ERROR");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
+    }
   });
 
   it("should handle database errors", async () => {
     const mockUser = { id: "user123" };
-    const mockError = new Error("Database error");
+    const mockError: PostgrestError = {
+      name: "PostgrestError",
+      message: "Database error",
+      code: "42501",
+      details: "",
+      hint: "",
+    };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.eq.mockResolvedValue({
@@ -104,8 +129,11 @@ describe("getCategoriesWithDetails", () => {
 
     const result = await getCategoriesWithDetails(1);
 
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("Database error");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.name).toBe("PG_ERROR");
+      expect(result.message).toBe("Database error");
+    }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error fetching catories with details:",
       mockError,
@@ -114,7 +142,7 @@ describe("getCategoriesWithDetails", () => {
 
   it("should handle empty result set", async () => {
     const mockUser = { id: "user123" };
-    const mockCategories = [];
+    const mockCategories: CategoryWithDetails[] = [];
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.eq.mockResolvedValue({
