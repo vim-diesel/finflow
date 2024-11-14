@@ -7,7 +7,7 @@ jest.mock("@/utils/supabase/server", () => ({
 }));
 
 jest.mock("next/cache", () => ({
-  revalidatePath: jest.fn(), 
+  revalidatePath: jest.fn(),
 }));
 
 // Define the structure of the mocked Supabase client
@@ -51,7 +51,7 @@ describe("createDefaultBudget", () => {
     const mockBudget = {
       id: 1,
       name: "My Budget",
-      user_id: mockUser.id
+      user_id: mockUser.id,
     };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
@@ -64,10 +64,12 @@ describe("createDefaultBudget", () => {
 
     expect(result).toEqual(mockBudget);
     expect(mockSupabase.from).toHaveBeenCalledWith("budgets");
-    expect(mockSupabase.insert).toHaveBeenCalledWith({ 
+    expect(mockSupabase.insert).toHaveBeenCalledWith({
       name: "My Budget",
-      user_id: mockUser.id 
+      user_id: mockUser.id,
     });
+    expect(mockSupabase.select).toHaveBeenCalled();
+    expect(mockSupabase.single).toHaveBeenCalled();
   });
 
   it("should reject unauthenticated users", async () => {
@@ -77,7 +79,9 @@ describe("createDefaultBudget", () => {
 
     expect(result).toBeInstanceOf(AppError);
     if (result instanceof AppError) {
-      expect(result.message).toBe("User authentication failed or user not found");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
     }
   });
 
@@ -99,7 +103,7 @@ describe("createDefaultBudget", () => {
     }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error creating budget: ",
-      mockError
+      mockError,
     );
   });
 
@@ -108,7 +112,7 @@ describe("createDefaultBudget", () => {
     const mockBudget = {
       id: 1,
       name: "My Budget",
-      user_id: mockUser.id
+      user_id: mockUser.id,
     };
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
@@ -117,11 +121,15 @@ describe("createDefaultBudget", () => {
       error: null,
     });
 
-    await createDefaultBudget();
+    const result = await createDefaultBudget();
 
+    expect(result).toEqual(mockBudget);
+    expect(mockSupabase.from).toHaveBeenCalledWith("budgets");
     expect(mockSupabase.insert).toHaveBeenCalledWith({
       name: "My Budget",
-      user_id: mockUser.id
+      user_id: mockUser.id,
     });
+    expect(mockSupabase.select).toHaveBeenCalled();
+    expect(mockSupabase.single).toHaveBeenCalled();
   });
 });
