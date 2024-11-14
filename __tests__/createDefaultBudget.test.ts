@@ -1,5 +1,6 @@
 import { createDefaultBudget } from "../app/actions";
 import { createServersideClient } from "@/utils/supabase/server";
+import { AppError } from "@/app/errors";
 
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
@@ -75,7 +76,9 @@ describe("createDefaultBudget", () => {
     const result = await createDefaultBudget();
 
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe("User authentication failed or user not found");
+    if (result instanceof AppError) {
+      expect(result.message).toBe("User authentication failed or user not found");
+    }
   });
 
   it("should handle database errors", async () => {
@@ -90,8 +93,10 @@ describe("createDefaultBudget", () => {
 
     const result = await createDefaultBudget();
 
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe("Database error");
+    expect(result).toBeInstanceOf(AppError);
+    if (result instanceof AppError) {
+      expect(result.message).toBe("Database error");
+    }
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error creating budget: ",
       mockError

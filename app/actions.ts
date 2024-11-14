@@ -453,7 +453,7 @@ export async function getAvailableAmount(
 
 export async function createDefaultBudget(
   name: string = "My Budget",
-): Promise<Budget | Error> {
+): Promise<Budget | AppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -461,8 +461,8 @@ export async function createDefaultBudget(
   } = await supabase.auth.getUser();
 
   if (authError || !user?.id) {
-    console.error("Error authenticating user: ", authError?.message);
-    return Error("User authentication failed or user not found");
+    console.error("Error authenticating user: ", authError);
+    return new AppError("AUTH_ERROR","User authentication failed or user not found", authError?.code, authError?.status);
   }
 
   const { data, error } = await supabase
@@ -473,7 +473,7 @@ export async function createDefaultBudget(
 
   if (error) {
     console.error("Error creating budget: ", error);
-    return error;
+    return new AppError("PG_ERROR", error.message, error.code);
   }
 
   return data;
