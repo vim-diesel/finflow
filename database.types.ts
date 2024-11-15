@@ -139,19 +139,19 @@ export type Database = {
         }
         Insert: {
           available?: number | null
-          budget_id?: number | null
+          budget_id: number
           created_at?: string
           id?: number
           month: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           available?: number | null
-          budget_id?: number | null
+          budget_id?: number
           created_at?: string
           id?: number
           month?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
