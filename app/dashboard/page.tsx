@@ -1,7 +1,7 @@
 import React from "react";
 import {
   getDefaultBudget,
-  getCurrMonthlyBudget,
+  getTodaysMonthlyBudget,
   getCategoriesWithDetails,
   getCategoryGroups,
 } from "@/app/actions";
@@ -50,7 +50,7 @@ export default async function Page() {
 
   // Fetch the current monthly budget.
   // Need to extend to allow user to select other months.
-  const currMonthlyBudget: MonthlyBudget | Error = await getCurrMonthlyBudget(
+  const currMonthlyBudget: MonthlyBudget | Error = await getTodaysMonthlyBudget(
     budget.id,
   );
 

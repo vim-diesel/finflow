@@ -6,13 +6,15 @@ import {
   MonthlyBudget,
   Transaction,
 } from "@/app/types";
+import { toast } from "sonner";
+import { PlainAppError } from "@/app/errors";
+import { addTransaction } from "@/app/actions";
 
 interface DebugPageProps {
-  budget?: Budget | { error: string };
-  categoryWithDetails?: CategoryWithDetails[] | { error: string };
-  monthlyBudget?: MonthlyBudget | { error: string };
-  transactions?: Transaction[] | { error: string };
-  handleTransaction: (e: React.FormEvent<HTMLFormElement>) => void;
+  budget?: Budget | null;
+  categoryWithDetails?: CategoryWithDetails[] | null;
+  monthlyBudget?: MonthlyBudget | null;
+  transactions?: Transaction[] | null;
 }
 
 // app/debug/page.tsx
@@ -21,9 +23,47 @@ export default function DisplayForm({
   categoryWithDetails,
   monthlyBudget,
   transactions,
-  handleTransaction,
 }: DebugPageProps) {
+  const [loading, setLoading] = React.useState(false);
 
+  async function handleAddTransaction(e: React.FormEvent<HTMLFormElement>) {
+    setLoading(true);
+    e.preventDefault();
+    const amount = Number(e.currentTarget.amount.value);
+    if (!amount) {
+      toast.warning("Enter your amount first...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    } else if (isNaN(Number(amount)) || amount === undefined) {
+      toast.warning("Amount must be a number...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    }
+    if (!budget || "error" in budget) {
+      // this shouldn't happen, if there's an error, it should be handled in the
+      // parent component and this component should not be rendered
+      toast.error("Error getting the budget from server page component...");
+      setLoading(false);
+      return;
+    }
+
+    console.log("Adding transaction: ", budget.id, amount);
+    const response = await addTransaction(budget.id, Number(amount), "inflow");
+    if (response?.error.name === "ERROR") {
+      const errStr = `Error adding transaction: ${response.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    }
+
+    toast.success("Transaction added successfully!");
+    setLoading(false);
+    return;
+  }
 
   return (
     <div className="p-4">
@@ -58,22 +98,20 @@ export default function DisplayForm({
 
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
-        {Array.isArray(transactions) ? (
+        {Array.isArray(transactions) &&
           transactions.map((tx) => (
-            <pre key={tx.id} className="mb-2 rounded bg-gray-100 p-4 dark:bg-black">
+            <pre
+              key={tx.id}
+              className="mb-2 rounded bg-gray-100 p-4 dark:bg-black"
+            >
               TxID: {tx.id} --- Amount: {tx.amount}
             </pre>
-          ))
-        ) : (
-          <pre className="rounded bg-gray-100 p-4 dark:bg-black">
-            {transactions?.error}
-          </pre>
-        )}
+          ))}
       </section>
 
       <section>
-        <h2 className="mb-4 text-2xl font-bold ">Add Transaction</h2>
-        <form onSubmit={handleTransaction} className="space-y-4">
+        <h2 className="mb-4 text-2xl font-bold">Add Transaction</h2>
+        <form onSubmit={handleAddTransaction} className="space-y-4">
           <input
             type="input"
             name="amount"
@@ -88,6 +126,12 @@ export default function DisplayForm({
           </button>
         </form>
       </section>
+      <button
+        onClick={() => toast.error("Error", { className: "bg-rose-500" })}
+      >
+        Click me
+      </button>
+      {loading && <div>Loading...</div>}
     </div>
   );
 }

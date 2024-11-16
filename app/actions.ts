@@ -9,8 +9,7 @@ import {
   Transaction,
   MonthlyCategoryDetails,
 } from "./types";
-import { AppError } from "./errors";
-import App from "next/app";
+import { AppError, PlainAppError } from "./errors";
 
 // I kind of like the idea of returning null instead of an Error if no rows are found.
 // It's not really an error, just no data. We can handle that in the component.
@@ -51,34 +50,24 @@ If we are calling this function, we need to create one. We will just do it for t
 But we will do it where we called the server action, and create another server 
 action to create a new budget.
 */
-export async function getDefaultBudget(): Promise<Budget | AppError> {
-  // Boilerplate code to create a Supabase client
-  // (basically configure a new fetch call)
-  // must be done anytime you wish to call auth.getUser()
+
+export async function getDefaultBudget(): Promise<Budget | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
 
-  // Return our custom error type if there is an auth error from supabase
-  if (authError) {
+  // Return our custom error type if there is an auth error from Supabase
+  if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
     return new AppError(
       "AUTH_ERROR",
       "User authentication failed or user not found",
-      authError?.code,
-    );
+      authError?.code
+    ).toPlainObject();
   }
 
-  // Seperately checking for a missing user (this is probably unecessary)
-  // TODO: Remove this if we are confident that authError will always be thrown
-  if (!user) {
-    console.error("User not found");
-    return new AppError("AUTH_ERROR", "User not found");
-  }
-
-  // Picks the first budget (lowest budget ID) for the user
   const { data: budget, error } = await supabase
     .from("budgets")
     .select("*")
@@ -94,10 +83,10 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
     // but we used a limit of 1, so that shouldn't happen.
     if (error.code === "PGRST116") {
       const budgetName = `${user.email}'s Budget`;
-      return createDefaultBudget(budgetName);
+      return await createDefaultBudget(budgetName);
     }
     console.error("Error fetching budgets: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -110,12 +99,11 @@ export async function getDefaultBudget(): Promise<Budget | AppError> {
 //
 // Output: the current monthly budget or an Error
 // monthlyBudget - the current monthly budget (Today)
-// TODO: store Month as an int: 202411. Divide by 100 for year, %100 for month. Sortable and comparable.
 // TODO: Run calculations to update the total available amount upon user login
 //
-export async function getCurrMonthlyBudget(
+export async function getTodaysMonthlyBudget(
   budgetId: number,
-): Promise<MonthlyBudget | AppError> {
+): Promise<MonthlyBudget | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -128,7 +116,7 @@ export async function getCurrMonthlyBudget(
       "AUTH_ERROR",
       "User authentication failed or user not found",
       authError?.code,
-    );
+    ).toPlainObject();
   }
 
   const today = new Date();
@@ -145,15 +133,15 @@ export async function getCurrMonthlyBudget(
     .limit(1)
     .single();
 
-  // Let our Server Component do that error handling, so it can decide to still
-  // render the page or not. Or it can create one.
   if (error) {
     if (error.code === "PGRST116") {
-      // create a monthly budget and calculate available amount
-      return createMonthlyBudget(budgetId);
+      // no monthly budget found
+      // create a monthly budget for the current month 
+      // TODO: and calculate available amount
+      return createMonthlyBudget(budgetId, new Date());
     }
     console.error("Error fetching current monthly budgets: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -168,7 +156,7 @@ export async function getCurrMonthlyBudget(
 // categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
   monthlyBudgetID: number,
-): Promise<CategoryWithDetails[] | AppError> {
+): Promise<CategoryWithDetails[] | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -182,7 +170,7 @@ export async function getCategoriesWithDetails(
       "User authentication failed or user not found",
       authError?.code,
       authError?.status,
-    );
+    ).toPlainObject();
   }
 
   const { data: categoriesWithDetails, error } = await supabase
@@ -197,7 +185,7 @@ export async function getCategoriesWithDetails(
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details:", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   // Map over the data to flatten `monthly_category_details` to a single object
@@ -212,7 +200,7 @@ export async function getCategoriesWithDetails(
 
 export async function getCategoryGroups(
   budgetId: number,
-): Promise<CategoryGroup[] | AppError> {
+): Promise<CategoryGroup[] | PlainAppError> {
   const supabase = createServersideClient();
 
   const {
@@ -227,7 +215,7 @@ export async function getCategoryGroups(
       "User authentication failed or user not found",
       authError?.code,
       authError?.status,
-    );
+    ).toPlainObject();
   }
 
   const { data, error } = await supabase
@@ -237,7 +225,7 @@ export async function getCategoryGroups(
 
   if (error || !data) {
     console.error("Error fetching category groups: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   return data;
@@ -263,6 +251,8 @@ We don't return the data inserted into the table, just null.
 //
 // Output: null or an Error
 
+// TODO: Zod validation.
+
 export async function addTransaction(
   budgetId: number,
   amount: number,
@@ -272,28 +262,31 @@ export async function addTransaction(
   note?: string,
   cleared?: boolean,
   payee?: string,
-): Promise<null | AppError> {
+): Promise<null | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
 
+  // Return our custom error type if there is an auth error from Supabase
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
     return new AppError(
       "AUTH_ERROR",
       "User authentication failed or user not found",
-      authError?.code,
-    );
+      authError?.code
+    ).toPlainObject();
   }
 
-  if (amount < 0) {
-    return new AppError("ERROR", "Transaction amount must be non-negative");
+  // Validate amount
+  if (amount < 0 || isNaN(amount)) {
+    return new AppError("VALIDATION_ERROR", "Transaction amount must be non-negative").toPlainObject();
   }
 
+  // Validate transaction type
   if (transactionType !== "inflow" && transactionType !== "outflow") {
-    return new AppError("ERROR", "Invalid transaction type");
+    return new AppError("VALIDATION_ERROR", "Invalid transaction type").toPlainObject();
   }
 
   const { error } = await supabase.from("transactions").insert({
@@ -302,17 +295,15 @@ export async function addTransaction(
     amount,
     transaction_type: transactionType,
     category_id: categoryId || null,
-    date: date
-      ? date.toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
+    date: date ? date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     note: note || "",
-    cleared: cleared || true,
+    cleared: cleared !== undefined ? cleared : true,
     payee: payee || null,
   });
 
   if (error) {
     console.error("Error inserting transaction: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -321,7 +312,7 @@ export async function addTransaction(
 
 export async function getTransactions(
   budgetId: number,
-): Promise<Transaction[] | AppError> {
+): Promise<Transaction[] | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -334,7 +325,7 @@ export async function getTransactions(
       "AUTH_ERROR",
       "User authentication failed or user not found",
       authError?.code,
-    );
+    ).toPlainObject();
   }
 
   const { data: transactions, error } = await supabase
@@ -345,7 +336,7 @@ export async function getTransactions(
 
   if (error) {
     console.error("Error fetching transactions: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -357,7 +348,7 @@ export async function updateAssigned(
   monthlyBudgetId: number,
   categoryId: number,
   amountAssigned: number,
-): Promise<null | AppError> {
+): Promise<null | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -371,11 +362,11 @@ export async function updateAssigned(
       "User authentication failed or user not found",
       authError?.code,
       authError?.status,
-    );
+    ).toPlainObject();
   }
 
   if (amountAssigned < 0) {
-    return new AppError("ERROR", "Assigned amount must be non-negative");
+    return new AppError("ERROR", "Assigned amount must be non-negative").toPlainObject();
   }
 
   const { error } = await supabase
@@ -386,7 +377,7 @@ export async function updateAssigned(
 
   if (error) {
     console.error("Error updating assigned amount: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   return null;
@@ -405,7 +396,7 @@ export async function updateAssigned(
 export async function getAvailableAmount(
   budgetId: number,
   month: Date,
-): Promise<number | null | AppError> {
+): Promise<number | null | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -419,12 +410,12 @@ export async function getAvailableAmount(
       "User authentication failed or user not found",
       authError?.code,
       authError?.status,
-    );
+    ).toPlainObject();
   }
 
   // Validate currMonth
   if (!(month instanceof Date) || isNaN(month.getTime())) {
-    return new AppError("ERROR", "Invalid date provided");
+    return new AppError("ERROR", "Invalid date provided").toPlainObject();
   }
 
   // Get all transactions up to the current month
@@ -444,16 +435,14 @@ export async function getAvailableAmount(
     .lte("date", month.toISOString())
     .order("date", { ascending: true });
 
-  // Pretty sure if there are no transactions then Supabase just throws an error,
-  // making the second if statement redundant.
-  // TODO: Check if this is true and remove the second if statement.
+
   if (transactionsError) {
     console.error("Error fetching transactions: ", transactionsError);
     return new AppError(
       "PG_ERROR",
       transactionsError?.message,
       transactionsError?.code,
-    );
+    ).toPlainObject();
   } else if (!transactions) {
     return null;
   }
@@ -471,7 +460,7 @@ export async function getAvailableAmount(
   // TODO: Check if this is true and remove the second if statement.
   if (bugdetsError) {
     console.error("Error fetching monthly budgets: ", bugdetsError);
-    return new AppError("PG_ERROR", bugdetsError.message, bugdetsError.code);
+    return new AppError("PG_ERROR", bugdetsError.message, bugdetsError.code).toPlainObject();
   } else if (!monthlyBudgets) {
     return null;
   }
@@ -490,16 +479,14 @@ export async function getAvailableAmount(
   // TODO: Same here.
   if (categoryError) {
     console.error("Error fetching monthly category details: ", categoryError);
-    return new AppError("PG_ERROR", categoryError.message, categoryError.code);
+    return new AppError("PG_ERROR", categoryError.message, categoryError.code).toPlainObject();
   } else if (!monthlyCategoryDetails) {
     return null;
   }
 
-  //  We'll sum up all previous inflow transactions, subtract the amount
+  // We'll sum up all previous inflow transactions, subtract the amount
   // assigned to all categories, and subtract previous uncategorized outflow.
   // This will give us the available amount for the current month.
-  // TODO: This is a lot of calculations. We should probably break this up into
-  // TODO: smaller functions. Also, tests.
 
   // Total inflow
   const totalInflow = transactions
@@ -526,7 +513,7 @@ export async function getAvailableAmount(
 
 export async function createDefaultBudget(
   name: string = "My Budget",
-): Promise<Budget | AppError> {
+): Promise<Budget | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -540,7 +527,7 @@ export async function createDefaultBudget(
       "User authentication failed or user not found",
       authError?.code,
       authError?.status,
-    );
+    ).toPlainObject();
   }
 
   const { data, error } = await supabase
@@ -551,7 +538,7 @@ export async function createDefaultBudget(
 
   if (error) {
     console.error("Error creating budget: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   return data;
@@ -560,7 +547,7 @@ export async function createDefaultBudget(
 export async function getMonthlyCategoryDetails(
   budgetId: number,
   month: string,
-): Promise<MonthlyCategoryDetails[] | AppError> {
+): Promise<MonthlyCategoryDetails[] | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -573,7 +560,7 @@ export async function getMonthlyCategoryDetails(
       "AUTH_ERROR",
       "User authentication failed or user not found",
       authError?.code,
-    );
+    ).toPlainObject();
   }
 
   const { data: details, error } = await supabase
@@ -584,7 +571,7 @@ export async function getMonthlyCategoryDetails(
 
   if (error) {
     console.error("Error fetching monthly category details: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   return details;
@@ -617,13 +604,15 @@ export async function calculateAvailableAmount(
     .eq("budget_id", budgetId)
     .lte("date", month);
 
-  if (transactionError || !transactions) {
+  if (transactionError) {
     console.error("Error fetching transactions: ", transactionError);
     return new AppError(
       "PG_ERROR",
       transactionError.message,
       transactionError.code,
     );
+  } else if (!transactions) {
+    return 0;
   }
 
   const { data: monthlyCategoryDetails, error: categoryError } = await supabase
@@ -656,10 +645,11 @@ export async function calculateAvailableAmount(
   return availableAmount;
 }
 
-// creates a new monthly budget for the current month
+// creates a new monthly budget for the given month
 export async function createMonthlyBudget(
   budgetId: number,
-): Promise<MonthlyBudget | AppError> {
+  month: Date,
+): Promise<MonthlyBudget | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -672,10 +662,10 @@ export async function createMonthlyBudget(
       "AUTH_ERROR",
       "User authentication failed or user not found",
       authError?.code,
-    );
+    ).toPlainObject();
   }
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const firstDayOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
   // Format date as YYYY-MM-DD
   const firstDayOfMonthUTC = new Date(firstDayOfMonth).toISOString().split('T')[0];
 
@@ -688,7 +678,7 @@ export async function createMonthlyBudget(
 
   if (error || !data) {
     console.error("Error fetching monthly budgets: ", error);
-    return new AppError("PG_ERROR", error.message, error.code);
+    return new AppError("PG_ERROR", error.message, error.code).toPlainObject();
   }
 
   return data;
