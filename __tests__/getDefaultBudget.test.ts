@@ -1,5 +1,5 @@
-import { AppError } from "@/app/errors";
-import { getDefaultBudget } from "../app/actions";
+import { AppError } from "@/errors/errors";
+import { getDefaultBudget } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 import { AuthError } from "@supabase/supabase-js";
 
@@ -84,7 +84,12 @@ describe("getDefaultBudget", () => {
 
   it("should return error if there is an error fetching budgets", async () => {
     const mockUser = { id: "user123" };
-    const mockPGError = new AppError("PG_ERROR", "Database error", "PG500", 500);
+    const mockPGError = new AppError(
+      "PG_ERROR",
+      "Database error",
+      "PG500",
+      500,
+    );
 
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
     mockSupabase.single.mockResolvedValue({

@@ -1,7 +1,7 @@
 import { Heading } from "../../components/heading";
 
-import { MonthlyBudget } from "../types";
-import { getAvailableAmount } from "../actions";
+import { MonthlyBudget } from "../../types/types";
+import { getAvailableAmount } from "../../actions/actions";
 
 export default async function HeadingBar({
   monthlyBudget,
@@ -31,8 +31,7 @@ export default async function HeadingBar({
 
   if (available instanceof Error) {
     return <Heading level={2}>Error fetching available amount</Heading>;
-  } 
-
+  }
 
   return (
     <div className="w-full border-b border-gray-400 md:flex md:items-center md:justify-between">

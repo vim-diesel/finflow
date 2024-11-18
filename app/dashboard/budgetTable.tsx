@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { CategoryGroup, CategoryWithDetails } from "@/app/types";
+import { CategoryGroup, CategoryWithDetails } from "@/types";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 function classNames(...classes: (string | boolean | undefined)[]): string {
@@ -12,7 +12,7 @@ export default function BudgetTable({
   categoryGroups,
   categories,
 }: {
-  categoryGroups: CategoryGroup[] |  null;
+  categoryGroups: CategoryGroup[] | null;
   categories: CategoryWithDetails[];
 }) {
   return (

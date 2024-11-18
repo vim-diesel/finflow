@@ -8,8 +8,8 @@ import {
   CategoryGroup,
   Transaction,
   MonthlyCategoryDetails,
-} from "./types";
-import { AppError, PlainAppError } from "./errors";
+} from "../types/types";
+import { AppError, PlainAppError } from "@/errors/";
 
 // I kind of like the idea of returning null instead of an Error if no rows are found.
 // It's not really an error, just no data. We can handle that in the component.
@@ -64,7 +64,7 @@ export async function getDefaultBudget(): Promise<Budget | PlainAppError> {
     return new AppError(
       "AUTH_ERROR",
       "User authentication failed or user not found",
-      authError?.code
+      authError?.code,
     ).toPlainObject();
   }
 
@@ -122,7 +122,9 @@ export async function getTodaysMonthlyBudget(
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   // Convert the date to UTC and format as YYYY-MM-DD
-  const firstDayOfMonthUTC = new Date(firstDayOfMonth).toISOString().split('T')[0];
+  const firstDayOfMonthUTC = new Date(firstDayOfMonth)
+    .toISOString()
+    .split("T")[0];
 
   // Fetch the current monthly budget
   const { data: monthlyBudget, error } = await supabase
@@ -136,7 +138,7 @@ export async function getTodaysMonthlyBudget(
   if (error) {
     if (error.code === "PGRST116") {
       // no monthly budget found
-      // create a monthly budget for the current month 
+      // create a monthly budget for the current month
       // TODO: and calculate available amount
       return createMonthlyBudget(budgetId, new Date());
     }
@@ -275,18 +277,24 @@ export async function addTransaction(
     return new AppError(
       "AUTH_ERROR",
       "User authentication failed or user not found",
-      authError?.code
+      authError?.code,
     ).toPlainObject();
   }
 
   // Validate amount
   if (amount < 0 || isNaN(amount)) {
-    return new AppError("VALIDATION_ERROR", "Transaction amount must be non-negative").toPlainObject();
+    return new AppError(
+      "VALIDATION_ERROR",
+      "Transaction amount must be non-negative",
+    ).toPlainObject();
   }
 
   // Validate transaction type
   if (transactionType !== "inflow" && transactionType !== "outflow") {
-    return new AppError("VALIDATION_ERROR", "Invalid transaction type").toPlainObject();
+    return new AppError(
+      "VALIDATION_ERROR",
+      "Invalid transaction type",
+    ).toPlainObject();
   }
 
   const { error } = await supabase.from("transactions").insert({
@@ -295,7 +303,9 @@ export async function addTransaction(
     amount,
     transaction_type: transactionType,
     category_id: categoryId || null,
-    date: date ? date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+    date: date
+      ? date.toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
     note: note || "",
     cleared: cleared !== undefined ? cleared : true,
     payee: payee || null,
@@ -366,7 +376,10 @@ export async function updateAssigned(
   }
 
   if (amountAssigned < 0) {
-    return new AppError("ERROR", "Assigned amount must be non-negative").toPlainObject();
+    return new AppError(
+      "ERROR",
+      "Assigned amount must be non-negative",
+    ).toPlainObject();
   }
 
   const { error } = await supabase
@@ -435,7 +448,6 @@ export async function getAvailableAmount(
     .lte("date", month.toISOString())
     .order("date", { ascending: true });
 
-
   if (transactionsError) {
     console.error("Error fetching transactions: ", transactionsError);
     return new AppError(
@@ -460,7 +472,11 @@ export async function getAvailableAmount(
   // TODO: Check if this is true and remove the second if statement.
   if (bugdetsError) {
     console.error("Error fetching monthly budgets: ", bugdetsError);
-    return new AppError("PG_ERROR", bugdetsError.message, bugdetsError.code).toPlainObject();
+    return new AppError(
+      "PG_ERROR",
+      bugdetsError.message,
+      bugdetsError.code,
+    ).toPlainObject();
   } else if (!monthlyBudgets) {
     return null;
   }
@@ -479,7 +495,11 @@ export async function getAvailableAmount(
   // TODO: Same here.
   if (categoryError) {
     console.error("Error fetching monthly category details: ", categoryError);
-    return new AppError("PG_ERROR", categoryError.message, categoryError.code).toPlainObject();
+    return new AppError(
+      "PG_ERROR",
+      categoryError.message,
+      categoryError.code,
+    ).toPlainObject();
   } else if (!monthlyCategoryDetails) {
     return null;
   }
@@ -667,12 +687,15 @@ export async function createMonthlyBudget(
 
   const firstDayOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
   // Format date as YYYY-MM-DD
-  const firstDayOfMonthUTC = new Date(firstDayOfMonth).toISOString().split('T')[0];
-
+  const firstDayOfMonthUTC = new Date(firstDayOfMonth)
+    .toISOString()
+    .split("T")[0];
 
   const { data, error } = await supabase
     .from("monthly_budgets")
-    .insert([{user_id: user.id, budget_id: budgetId, month: firstDayOfMonthUTC}])
+    .insert([
+      { user_id: user.id, budget_id: budgetId, month: firstDayOfMonthUTC },
+    ])
     .select()
     .single();
 

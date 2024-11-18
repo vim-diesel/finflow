@@ -1,6 +1,5 @@
 type ErrorName =
-  | "ERROR"
-  | "PG_ERROR"
+  | "DB_ERROR"
   | "AUTH_ERROR"
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
@@ -43,16 +42,3 @@ export class AppError extends Error {
   }
 }
 
-// type guard
-export function isPlainAppError(obj: any): obj is PlainAppError {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "error" in obj &&
-    typeof obj.error === "object" &&
-    "name" in obj.error &&
-    "message" in obj.error &&
-    "code" in obj.error &&
-    "status" in obj.error
-  );
-}

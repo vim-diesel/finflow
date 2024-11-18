@@ -1,4 +1,4 @@
-import { getTransactions } from "@/app/actions";
+import { getTransactions } from "@/actions/actions";
 import { Database } from "@/database.types";
 import { Heading } from "@/components/heading";
 

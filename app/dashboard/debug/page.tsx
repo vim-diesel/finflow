@@ -4,14 +4,14 @@ import {
   CategoryWithDetails,
   MonthlyBudget,
   Transaction,
-} from "@/app/types";
-import { AppError, isPlainAppError, PlainAppError } from "@/app/errors";
+} from "@/types/types";
+import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import {
   getDefaultBudget,
   getTodaysMonthlyBudget,
   getTransactions,
   getCategoriesWithDetails,
-} from "@/app/actions";
+} from "@/actions/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
 
@@ -30,13 +30,17 @@ export default async function DebugPage() {
     return <div>TX Fetch Error: {txs.error.message}</div>;
   }
 
-  const currMonthlyBudget: MonthlyBudget | PlainAppError = await getTodaysMonthlyBudget(budget.id);
+  const currMonthlyBudget: MonthlyBudget | PlainAppError =
+    await getTodaysMonthlyBudget(budget.id);
 
   if (isPlainAppError(currMonthlyBudget)) {
-    return <div>Fetch Monthly Budget Error: {currMonthlyBudget.error.message}</div>;
+    return (
+      <div>Fetch Monthly Budget Error: {currMonthlyBudget.error.message}</div>
+    );
   }
 
-  const categoryWithDetails: CategoryWithDetails[] | PlainAppError = await getCategoriesWithDetails(budget.id);
+  const categoryWithDetails: CategoryWithDetails[] | PlainAppError =
+    await getCategoriesWithDetails(budget.id);
 
   if (isPlainAppError(categoryWithDetails)) {
     return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;

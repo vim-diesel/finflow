@@ -1,7 +1,7 @@
-import { getCurrMonthlyBudget } from "../app/actions";
+import { getCurrMonthlyBudget } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 import { PostgrestError } from "@supabase/supabase-js";
-import { AppError } from "@/app/errors";
+import { AppError } from "@/errors/errors";
 
 // Mock the Supabase client and Next.js cache functions
 jest.mock("@/utils/supabase/server", () => ({

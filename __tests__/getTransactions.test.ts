@@ -1,8 +1,8 @@
-import { getTransactions } from "../app/actions";
+import { getTransactions } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
-import { AppError } from "../app/errors";
+import { AppError } from "../errors/errors";
 import { PostgrestError } from "@supabase/supabase-js";
-import { Transaction } from "@/app/types";
+import { Transaction } from "@/types/types";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({

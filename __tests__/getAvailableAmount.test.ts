@@ -1,5 +1,5 @@
-import { AppError } from "@/app/errors";
-import { getAvailableAmount } from "../app/actions";
+import { AppError } from "@/errors/errors";
+import { getAvailableAmount } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 import { PostgrestError } from "@supabase/supabase-js";
 
@@ -90,8 +90,11 @@ describe("getAvailableAmountTS", () => {
     mockSupabase.from.mockImplementation(
       mockDatabaseCalls({
         transactions: { data: mockData.transactions, error: null },
-        monthly_budgets: { data: mockData.monthlyBudgets , error: null },
-        monthly_category_details: { data: mockData.monthlyCategoryDetails, error: null },
+        monthly_budgets: { data: mockData.monthlyBudgets, error: null },
+        monthly_category_details: {
+          data: mockData.monthlyCategoryDetails,
+          error: null,
+        },
       }),
     );
 

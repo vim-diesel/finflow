@@ -1,5 +1,5 @@
-import { AppError } from "@/app/errors";
-import { addTransaction } from "../app/actions";
+import { AppError } from "@/errors/errors";
+import { addTransaction } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
 
@@ -102,7 +102,9 @@ describe("addTransaction", () => {
     expect(result).toBeInstanceOf(AppError);
     if (result instanceof AppError) {
       expect(result.name).toBe("AUTH_ERROR");
-      expect(result.message).toBe("User authentication failed or user not found");
+      expect(result.message).toBe(
+        "User authentication failed or user not found",
+      );
       expect(result.code).toBe("UNKNOWN_CODE");
       expect(result.status).toBe(500);
     }
@@ -110,7 +112,7 @@ describe("addTransaction", () => {
     // Verify that console.error was called with the correct message
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error authenticating user: ",
-      authError.message
+      authError.message,
     );
   });
 
@@ -120,8 +122,8 @@ describe("addTransaction", () => {
       name: "PostgrestError",
       message: "Database error",
       code: "42501", // Example Postgres error code for insufficient privilege
-      details: '',
-      hint: '',
+      details: "",
+      hint: "",
     };
 
     // Mock authentication to return a valid user
@@ -150,7 +152,7 @@ describe("addTransaction", () => {
     // Verify that console.error was called with the correct message
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Error inserting transaction: ",
-      dbError
+      dbError,
     );
   });
 });

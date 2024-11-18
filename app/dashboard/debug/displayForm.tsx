@@ -5,10 +5,10 @@ import {
   CategoryWithDetails,
   MonthlyBudget,
   Transaction,
-} from "@/app/types";
+} from "@/types/types";
 import { toast } from "sonner";
-import { isPlainAppError, PlainAppError } from "@/app/errors";
-import { addTransaction } from "@/app/actions";
+import { isPlainAppError, PlainAppError } from "@/errors";
+import { addTransaction } from "@/actions/actions";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -30,7 +30,7 @@ export default function DisplayForm({
     "inflow",
   );
 
-  console.log(categoryWithDetails)
+  console.log(categoryWithDetails);
 
   async function handleAddTransaction(
     input: number | string,
@@ -61,7 +61,11 @@ export default function DisplayForm({
     }
 
     // budget cannot be undefined at this stage.
-    const response = await addTransaction(budget!.id, Number(amount), inputType);
+    const response = await addTransaction(
+      budget!.id,
+      Number(amount),
+      inputType,
+    );
     if (response?.error) {
       const errStr = `Error adding transaction: ${response.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });

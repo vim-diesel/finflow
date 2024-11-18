@@ -1,7 +1,7 @@
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
-import { getCategoryGroups } from "../app/actions";
+import { getCategoryGroups } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
-import { AppError } from "@/app/errors";
+import { AppError } from "@/errors/errors";
 
 // Mock the Supabase client
 jest.mock("@/utils/supabase/server", () => ({
@@ -100,7 +100,7 @@ describe("getCategoryGroups", () => {
 
     const result = await getCategoryGroups(1);
     expect(result).toBeInstanceOf(AppError);
-    if (result instanceof AppError) { 
+    if (result instanceof AppError) {
       expect(result.name).toBe("PG_ERROR");
       expect(result.message).toBe("Database query failed");
     }

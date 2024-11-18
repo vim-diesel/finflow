@@ -1,6 +1,6 @@
-import { createDefaultBudget } from "../app/actions";
+import { createDefaultBudget } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
-import { AppError } from "@/app/errors";
+import { AppError } from "@/errors/errors";
 
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),

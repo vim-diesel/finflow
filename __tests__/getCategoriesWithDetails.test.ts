@@ -1,8 +1,8 @@
-import { getCategoriesWithDetails } from "../app/actions";
+import { getCategoriesWithDetails } from "../actions/actions";
 import { createServersideClient } from "@/utils/supabase/server";
-import { AppError } from "@/app/errors";
+import { AppError } from "@/errors/errors";
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
-import { CategoryWithDetails } from "@/app/types";
+import { CategoryWithDetails } from "@/types/types";
 
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),
@@ -98,7 +98,10 @@ describe("getCategoriesWithDetails", () => {
 
   it("should reject unauthenticated users", async () => {
     const mockAuthError = new AuthError("Authentication session missing", 401);
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: mockAuthError });
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: mockAuthError,
+    });
 
     const result = await getCategoriesWithDetails(1);
 
