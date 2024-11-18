@@ -11,7 +11,7 @@ import {
   getTodaysMonthlyBudget,
   getTransactions,
   getCategoriesWithDetails,
-} from "@/actions/actions";
+} from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
 

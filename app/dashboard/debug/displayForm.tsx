@@ -8,7 +8,7 @@ import {
 } from "@/types/types";
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { addTransaction } from "@/actions/actions";
+import { addTransaction } from "@/actions";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;

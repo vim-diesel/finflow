@@ -3,5 +3,5 @@
 export * from './budget';
 export * from './transactions';
 export * from './categories';
-export * from './auth';
+export * from './monthlyBudgets';
 // Add other feature exports here
