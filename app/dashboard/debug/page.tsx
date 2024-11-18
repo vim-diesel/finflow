@@ -5,9 +5,8 @@ import {
   MonthlyBudget,
   Transaction,
 } from "@/app/types";
-import { isPlainAppError, PlainAppError } from "@/app/errors";
+import { AppError, isPlainAppError, PlainAppError } from "@/app/errors";
 import {
-  addTransaction,
   getDefaultBudget,
   getTodaysMonthlyBudget,
   getTransactions,
@@ -22,25 +21,27 @@ export default async function DebugPage() {
 
   if (isPlainAppError(budget)) {
     return <div>Budget Fetch Error: {budget.error.message}</div>;
-  } else if (!budget) {
-    return <div>Loading...</div>;
   }
 
-  const txs = await getTransactions(budget.id);
+  // Could return an empty array if there are no transactions
+  const txs: Transaction[] | PlainAppError = await getTransactions(budget.id);
 
   if (isPlainAppError(txs)) {
     return <div>TX Fetch Error: {txs.error.message}</div>;
-  } else if (!txs) {
-    return <div>Loading...</div>;
   }
 
-  const currMonthlyBudget = await getTodaysMonthlyBudget(budget.id);
+  const currMonthlyBudget: MonthlyBudget | PlainAppError = await getTodaysMonthlyBudget(budget.id);
 
   if (isPlainAppError(currMonthlyBudget)) {
     return <div>Fetch Monthly Budget Error: {currMonthlyBudget.error.message}</div>;
-  } else if (!currMonthlyBudget) {
-    return <div>Loading...</div>;
   }
+
+  const categoryWithDetails: CategoryWithDetails[] | PlainAppError = await getCategoriesWithDetails(budget.id);
+
+  if (isPlainAppError(categoryWithDetails)) {
+    return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
+  }
+  // const errorTest = new AppError("ERROR", "This is a test error message").toPlainObject();
 
   return (
     <>
@@ -49,6 +50,7 @@ export default async function DebugPage() {
         budget={budget}
         monthlyBudget={currMonthlyBudget}
         transactions={txs}
+        categoryWithDetails={categoryWithDetails}
       />
     </>
   );

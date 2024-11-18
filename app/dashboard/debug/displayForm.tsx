@@ -7,14 +7,14 @@ import {
   Transaction,
 } from "@/app/types";
 import { toast } from "sonner";
-import { PlainAppError } from "@/app/errors";
+import { isPlainAppError, PlainAppError } from "@/app/errors";
 import { addTransaction } from "@/app/actions";
 
 interface DebugPageProps {
-  budget?: Budget | null;
-  categoryWithDetails?: CategoryWithDetails[] | null;
-  monthlyBudget?: MonthlyBudget | null;
-  transactions?: Transaction[] | null;
+  budget: Budget | PlainAppError;
+  categoryWithDetails: CategoryWithDetails[] | PlainAppError;
+  monthlyBudget: MonthlyBudget | PlainAppError;
+  transactions: Transaction[] | PlainAppError;
 }
 
 // app/debug/page.tsx
@@ -25,11 +25,19 @@ export default function DisplayForm({
   transactions,
 }: DebugPageProps) {
   const [loading, setLoading] = React.useState(false);
+  const [inputAmount, setInputAmount] = React.useState<number | string>("");
+  const [inputType, setInputType] = React.useState<"inflow" | "outflow">(
+    "inflow",
+  );
 
-  async function handleAddTransaction(e: React.FormEvent<HTMLFormElement>) {
+  console.log(categoryWithDetails)
+
+  async function handleAddTransaction(
+    input: number | string,
+    type: "inflow" | "outflow",
+  ) {
     setLoading(true);
-    e.preventDefault();
-    const amount = Number(e.currentTarget.amount.value);
+    const amount = Number(input);
     if (!amount) {
       toast.warning("Enter your amount first...", {
         className: "bg-yellow-200",
@@ -43,7 +51,8 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
-    if (!budget || "error" in budget) {
+
+    if (isPlainAppError(budget)) {
       // this shouldn't happen, if there's an error, it should be handled in the
       // parent component and this component should not be rendered
       toast.error("Error getting the budget from server page component...");
@@ -51,9 +60,9 @@ export default function DisplayForm({
       return;
     }
 
-    console.log("Adding transaction: ", budget.id, amount);
-    const response = await addTransaction(budget.id, Number(amount), "inflow");
-    if (response?.error.name === "ERROR") {
+    // budget cannot be undefined at this stage.
+    const response = await addTransaction(budget!.id, Number(amount), inputType);
+    if (response?.error) {
       const errStr = `Error adding transaction: ${response.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
       setLoading(false);
@@ -104,27 +113,56 @@ export default function DisplayForm({
               key={tx.id}
               className="mb-2 rounded bg-gray-100 p-4 dark:bg-black"
             >
-              TxID: {tx.id} --- Amount: {tx.amount}
+              TxID: {tx.id} --- Amount: {tx.amount} --- {tx.transaction_type}
             </pre>
           ))}
       </section>
 
       <section>
         <h2 className="mb-4 text-2xl font-bold">Add Transaction</h2>
-        <form onSubmit={handleAddTransaction} className="space-y-4">
-          <input
-            type="input"
-            name="amount"
-            placeholder="Amount"
-            className="w-full rounded border p-2 dark:bg-gray-800"
-          />
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-500 p-2 text-white"
-          >
-            Add
-          </button>
-        </form>
+        <input
+          type="input"
+          name="amount"
+          value={inputAmount}
+          onChange={(e) => setInputAmount(e.target.value)}
+          placeholder="Amount"
+          className="w-full rounded border p-2 dark:bg-gray-800"
+        />
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="transactionType"
+              value="inflow"
+              checked={inputType === "inflow"}
+              onChange={(e) =>
+                setInputType(e.target.value as "inflow" | "outflow")
+              }
+              className="mr-2"
+            />
+            Inflow
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="transactionType"
+              value="outflow"
+              checked={inputType === "outflow"}
+              onChange={(e) =>
+                setInputType(e.target.value as "inflow" | "outflow")
+              }
+              className="mr-2"
+            />
+            Outflow
+          </label>
+        </div>
+        <button
+          type="submit"
+          onClick={() => handleAddTransaction(inputAmount, inputType)}
+          className="w-full rounded bg-blue-500 p-2 text-white"
+        >
+          Add
+        </button>
       </section>
       <button
         onClick={() => toast.error("Error", { className: "bg-rose-500" })}

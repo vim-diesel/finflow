@@ -13,7 +13,7 @@ import {
   CategoryGroup,
   CategoryWithDetails,
 } from "@/app/types";
-import { AppError } from "../errors";
+import { AppError, PlainAppError } from "../errors";
 
 // Sort the category groups by priority (Bills, Needs, Wants, and anything else)
 function sortCategoryGroups(categoryGroups: CategoryGroup[]): CategoryGroup[] {
@@ -34,7 +34,7 @@ export default async function Page() {
   // These steps can probably be condensed into one or two action calls.
   // Find Budget > Find curr MonthlyBudget >
   // > Get Categories joined with Monthly Category Details table > Get CategoryGroups
-  const budget: Budget | AppError = await getDefaultBudget();
+  const budget: Budget | PlainAppError = await getDefaultBudget();
 
   if (budget instanceof AppError) {
 
