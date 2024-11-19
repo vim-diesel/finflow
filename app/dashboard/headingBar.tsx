@@ -1,7 +1,8 @@
-import { Heading } from "../../components/heading";
+import { Heading } from "@/components/heading";
 
-import { MonthlyBudget } from "../../types/types";
-import { getAvailableAmount } from "../../actions/actions";
+import { MonthlyBudget } from "@/types";
+import { getAvailableAmount } from "@/actions";
+import { isPlainAppError } from "@/errors";
 
 export default async function HeadingBar({
   monthlyBudget,
@@ -29,7 +30,7 @@ export default async function HeadingBar({
     new Date(),
   );
 
-  if (available instanceof Error) {
+  if (isPlainAppError(available)) {
     return <Heading level={2}>Error fetching available amount</Heading>;
   }
 

@@ -105,24 +105,50 @@ export default function DisplayForm({
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
         <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 dark:bg-black">
-          {categoryWithDetails && JSON.stringify(categoryWithDetails, null, 2)}
+          {Array.isArray(categoryWithDetails) &&
+            categoryWithDetails.map((c) => (
+              <pre key={c.id} className="mb-2">
+                {JSON.stringify(c, null, 2)}
+              </pre>
+            ))}
         </pre>
       </section>
 
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
-        {Array.isArray(transactions) &&
-          transactions.map((tx) => (
-            <pre
-              key={tx.id}
-              className="mb-2 rounded bg-gray-100 p-4 dark:bg-black"
-            >
-              TxID: {tx.id} --- Amount: {tx.amount} --- {tx.transaction_type}
-            </pre>
-          ))}
+        <div className="mb-4 w-full">
+          {/* Table Header */}
+          <div className="grid grid-cols-3 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+            <div className="font-semibold">TxID</div>
+            <div className="font-semibold">Amount</div>
+            <div className="font-semibold">Type</div>
+          </div>
+          {/* Table Rows */}
+          {Array.isArray(transactions) &&
+            transactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="mb-2 grid grid-cols-3 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+              >
+                <div>
+                  <span className="font-semibold">TxID:</span> {tx.id}
+                </div>
+                <div>
+                  <span className="font-semibold">Amount:</span> {tx.amount}
+                </div>
+                <div>
+                  <span className="font-semibold">Type:</span>{" "}
+                  {tx.transaction_type}
+                </div>
+              </div>
+            ))}
+        </div>
       </section>
 
-      <section>
+      <section className="mb-8">
+        </section>
+
+      <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Add Transaction</h2>
         <input
           type="input"
