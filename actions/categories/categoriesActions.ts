@@ -83,13 +83,13 @@ export async function addCategory(
 
   const { error } = await supabase
     .from("categories")
-    .insert([{ name: categoryName, user_id: user.id, groupId: groupId }]);
+    .insert([{ name: categoryName, user_id: user.id, group_id: groupId }]);
 
   if (error) {
     console.error("Error adding category: ", error);
     return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
   }
 
-  // revalidatePath("/dashboard");
+  revalidatePath("/dashboard");
   return null;
 }

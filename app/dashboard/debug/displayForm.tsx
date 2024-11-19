@@ -1,27 +1,44 @@
 "use client";
 import React from "react";
+
 import {
   Budget,
+  CategoryGroup,
   CategoryWithDetails,
   MonthlyBudget,
   Transaction,
 } from "@/types/types";
+
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
 import { addCategory, addTransaction } from "@/actions";
 import { Button } from "@/components/button";
-import { set } from "zod";
-import { a } from "framer-motion/client";
 import { RadioField, RadioGroup } from "@/components/radio";
 import { Radio } from "../../../components/radio";
 import { Label } from "@headlessui/react";
+import {
+  DescriptionDetails,
+  DescriptionList,
+  DescriptionTerm,
+} from "@/components/description-list";
+import { Divider } from "@/components/divider";
+import { Dropdown } from "@/components/dropdown";
+import { Select } from "@/components/select";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
   categoryWithDetails: CategoryWithDetails[] | PlainAppError;
   monthlyBudget: MonthlyBudget | PlainAppError;
   transactions: Transaction[] | PlainAppError;
+  categoryGroups: CategoryGroup[] | PlainAppError;
 }
+
+const getCategoryGroupById = (
+  categoryGroupId: number,
+  categoryGroups: CategoryGroup[],
+): CategoryGroup | undefined => {
+  return categoryGroups.find((group) => group.id === categoryGroupId);
+};
 
 // app/debug/page.tsx
 export default function DisplayForm({
@@ -29,32 +46,50 @@ export default function DisplayForm({
   categoryWithDetails,
   monthlyBudget,
   transactions,
+  categoryGroups,
 }: DebugPageProps) {
   const [loading, setLoading] = React.useState(false);
-  const [inputCategory, setInputCategory] = React.useState<string>("");
+  const [inputNewCategory, setInputNewCategory] = React.useState<string>("");
   const [inputAmount, setInputAmount] = React.useState<number | string>("");
-  const [inputType, setInputType] = React.useState<"inflow" | "outflow">(
-    "inflow",
-  );
+  const [transactionType, setTransactionType] = React.useState<string>("");
+  const [categoryGroupId, setCategoryGroupId] = React.useState<number>();
+
+  const handleTransactionTypeChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setTransactionType(event.target.value as "inflow" | "outflow");
+  };
 
   async function handleAddCategory() {
+    console.log("Adding category...", inputNewCategory, categoryGroupId);
     setLoading(true);
-    if (!inputCategory) {
+    if (!inputNewCategory) {
       toast.warning("Enter category name first...", {
         className: "bg-yellow-200",
       });
       setLoading(false);
       return;
     }
-    const res = await addCategory(inputCategory, 1);
-    setLoading(false);
-    toast.success("Category added successfully!");
+    if (!categoryGroupId) {
+      toast.warning("Select a category group first...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    }
+    const res = await addCategory(inputNewCategory, categoryGroupId);
+    if (res?.error) {
+      toast.error("Error adding category: " + res.error.message);
+      setLoading(false);
+      return;
+    } else {
+      toast.success("Category added successfully!");
+      setLoading(false);
+      return;
+    }
   }
 
-  async function handleAddTransaction(
-    input: number | string,
-    type: "inflow" | "outflow",
-  ) {
+  async function handleAddTransaction(input: number | string, type: string) {
     setLoading(true);
     const amount = Number(input);
     if (!amount) {
@@ -83,7 +118,7 @@ export default function DisplayForm({
     const response = await addTransaction(
       budget!.id,
       Number(amount),
-      inputType,
+      transactionType as "inflow" | "outflow",
     );
     if (response?.error) {
       const errStr = `Error adding transaction: ${response.error.message}`;
@@ -101,37 +136,71 @@ export default function DisplayForm({
     <div className="p-4">
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Budget</h2>
-        <pre className="rounded bg-gray-100 p-4 dark:bg-black">
-          {JSON.stringify(
-            {
-              budget,
-              isError: budget instanceof Object && "error" in budget,
-              isNull: budget === null,
-            },
-            null,
-            2,
-          )}
-        </pre>
+        {!isPlainAppError(budget) && (
+          <DescriptionList>
+            <DescriptionTerm>Budget ID</DescriptionTerm>
+            <DescriptionDetails>{budget.id}</DescriptionDetails>
+            <DescriptionTerm>Budget Name</DescriptionTerm>
+            <DescriptionDetails>{budget.name}</DescriptionDetails>
+          </DescriptionList>
+        )}
       </section>
+
+      <Divider className="my-6" />
 
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Current Monthly Budget</h2>
-        <pre className="rounded bg-gray-100 p-4 dark:bg-black">
-          {JSON.stringify(monthlyBudget, null, 2)}
-        </pre>
+        {!isPlainAppError(monthlyBudget) && (
+          <DescriptionList>
+            <DescriptionTerm>Month</DescriptionTerm>
+            <DescriptionDetails>{monthlyBudget.month}</DescriptionDetails>
+            <DescriptionTerm>Available</DescriptionTerm>
+            <DescriptionDetails>{monthlyBudget.available}</DescriptionDetails>
+          </DescriptionList>
+        )}
       </section>
+
+      <Divider className="my-6" />
 
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
-        <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 dark:bg-black">
+        <div className="mb-4 w-full">
+          {/* Table Header */}
+          <div className="grid grid-cols-5 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+            <div className="font-semibold">Name</div>
+            <div className="font-semibold">Assigned</div>
+            <div className="font-semibold">Spent</div>
+            <div className="font-semibold">Goal</div>
+            <div className="font-semibold">Carryover</div>
+          </div>
+
+          {/* Table Rows */}
           {Array.isArray(categoryWithDetails) &&
             categoryWithDetails.map((c) => (
-              <pre key={c.id} className="mb-2">
-                {JSON.stringify(c, null, 2)}
-              </pre>
+              <div
+                key={c.id}
+                className="mb-2 grid grid-cols-5 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+              >
+                <div>{c.name}</div>
+                <div>
+                  {c.monthly_category_details &&
+                    c.monthly_category_details.amount_assigned}
+                </div>
+                <div>
+                  {c.monthly_category_details &&
+                    c.monthly_category_details.amount_spent}
+                </div>
+                <div>{c.target_amount}</div>
+                <div>
+                  {c.monthly_category_details &&
+                    c.monthly_category_details.carryover_from_previous_month}
+                </div>
+              </div>
             ))}
-        </pre>
+        </div>
       </section>
+
+      <Divider className="my-6" />
 
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
@@ -142,6 +211,7 @@ export default function DisplayForm({
             <div className="font-semibold">Amount</div>
             <div className="font-semibold">Type</div>
           </div>
+
           {/* Table Rows */}
           {Array.isArray(transactions) &&
             transactions.map((tx) => (
@@ -157,6 +227,8 @@ export default function DisplayForm({
         </div>
       </section>
 
+      <Divider className="my-6" />
+
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Category</h2>
         <input
@@ -164,11 +236,38 @@ export default function DisplayForm({
           name="category"
           placeholder="Category Name"
           className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
-          value={inputCategory}
-          onChange={(e) => setInputCategory(e.target.value)}
+          value={inputNewCategory}
+          onChange={(e) => setInputNewCategory(e.target.value)}
         />
+        <Select
+          name="categoryGroup"
+          className="mb-2 max-w-48"
+          value={categoryGroupId}
+          defaultValue=""
+          onChange={(e) => setCategoryGroupId(Number(e.target.value))}
+        >
+          <option value="" disabled>
+            Select a category&hellip;
+          </option>
+          {!isPlainAppError(categoryGroups) &&
+            categoryGroups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+        </Select>
         <Button onClick={handleAddCategory}> Add </Button>
+        <h5>Category Group Id</h5>
+        <p>{categoryGroupId}</p>
+        <h5>Category Name</h5>
+        <p>
+          {!isPlainAppError(categoryGroups) &&
+            categoryGroupId &&
+            getCategoryGroupById(categoryGroupId, categoryGroups)?.name}
+        </p>
       </section>
+
+      <Divider className="my-6" />
 
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Transaction</h2>
@@ -180,12 +279,14 @@ export default function DisplayForm({
           placeholder="Amount"
           className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
         />
+
         <div className="mb-2">
           <RadioGroup
             name="transactionType"
             defaultValue="inflow"
             aria-label="Transaction Type"
             className="space-y-1"
+            onChange={setTransactionType}
           >
             <RadioField>
               <Radio value="inflow" />
@@ -197,10 +298,14 @@ export default function DisplayForm({
             </RadioField>
           </RadioGroup>
         </div>
-        <Button onClick={() => handleAddTransaction(inputAmount, inputType)}>
+
+        <Button
+          onClick={() => handleAddTransaction(inputAmount, transactionType)}
+        >
           Add
         </Button>
       </section>
+
       {loading && <div>Loading...</div>}
     </div>
   );

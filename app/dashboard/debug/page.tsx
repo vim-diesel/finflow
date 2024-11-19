@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Budget,
+  CategoryGroup,
   CategoryWithDetails,
   MonthlyBudget,
   Transaction,
@@ -11,6 +12,7 @@ import {
   getTodaysMonthlyBudget,
   getTransactions,
   getCategoriesWithDetails,
+  getCategoryGroups,
 } from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
@@ -45,7 +47,13 @@ export default async function DebugPage() {
   if (isPlainAppError(categoryWithDetails)) {
     return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
   }
-  // const errorTest = new AppError("ERROR", "This is a test error message").toPlainObject();
+
+  const categoryGroups: CategoryGroup[] | PlainAppError = await getCategoryGroups(budget.id);
+
+  if (isPlainAppError(categoryGroups)) {
+    return <div>Category Groups Fetch Error: {categoryGroups.error.message}</div>;
+  }
+
 
   return (
     <>
@@ -55,6 +63,7 @@ export default async function DebugPage() {
         monthlyBudget={currMonthlyBudget}
         transactions={txs}
         categoryWithDetails={categoryWithDetails}
+        categoryGroups={categoryGroups}
       />
     </>
   );

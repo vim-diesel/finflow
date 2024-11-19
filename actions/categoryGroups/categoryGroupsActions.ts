@@ -27,7 +27,8 @@ export async function getCategoryGroups(
   const { data, error } = await supabase
     .from("category_groups")
     .select("*")
-    .eq("budget_id", budgetId);
+    .eq("budget_id", budgetId)
+    .order("id", { ascending: true });
 
   if (error || !data) {
     console.error("Error fetching category groups: ", error);
