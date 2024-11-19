@@ -8,7 +8,13 @@ import {
 } from "@/types/types";
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { addTransaction } from "@/actions";
+import { addCategory, addTransaction } from "@/actions";
+import { Button } from "@/components/button";
+import { set } from "zod";
+import { a } from "framer-motion/client";
+import { RadioField, RadioGroup } from "@/components/radio";
+import { Radio } from "../../../components/radio";
+import { Label } from "@headlessui/react";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -25,12 +31,25 @@ export default function DisplayForm({
   transactions,
 }: DebugPageProps) {
   const [loading, setLoading] = React.useState(false);
+  const [inputCategory, setInputCategory] = React.useState<string>("");
   const [inputAmount, setInputAmount] = React.useState<number | string>("");
   const [inputType, setInputType] = React.useState<"inflow" | "outflow">(
     "inflow",
   );
 
-  console.log(categoryWithDetails);
+  async function handleAddCategory() {
+    setLoading(true);
+    if (!inputCategory) {
+      toast.warning("Enter category name first...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    }
+    const res = await addCategory(inputCategory, 1);
+    setLoading(false);
+    toast.success("Category added successfully!");
+  }
 
   async function handleAddTransaction(
     input: number | string,
@@ -130,75 +149,58 @@ export default function DisplayForm({
                 key={tx.id}
                 className="mb-2 grid grid-cols-3 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
               >
-                <div>
-                  <span className="font-semibold">TxID:</span> {tx.id}
-                </div>
-                <div>
-                  <span className="font-semibold">Amount:</span> {tx.amount}
-                </div>
-                <div>
-                  <span className="font-semibold">Type:</span>{" "}
-                  {tx.transaction_type}
-                </div>
+                <div>{tx.id}</div>
+                <div>{tx.amount}</div>
+                <div>{tx.transaction_type}</div>
               </div>
             ))}
         </div>
       </section>
 
       <section className="mb-8">
-        </section>
+        <h2 className="mb-3 text-2xl font-bold">Add Category</h2>
+        <input
+          type="input"
+          name="category"
+          placeholder="Category Name"
+          className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
+          value={inputCategory}
+          onChange={(e) => setInputCategory(e.target.value)}
+        />
+        <Button onClick={handleAddCategory}> Add </Button>
+      </section>
 
       <section className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Add Transaction</h2>
+        <h2 className="mb-3 text-2xl font-bold">Add Transaction</h2>
         <input
           type="input"
           name="amount"
           value={inputAmount}
           onChange={(e) => setInputAmount(e.target.value)}
           placeholder="Amount"
-          className="w-full rounded border p-2 dark:bg-gray-800"
+          className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
         />
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="transactionType"
-              value="inflow"
-              checked={inputType === "inflow"}
-              onChange={(e) =>
-                setInputType(e.target.value as "inflow" | "outflow")
-              }
-              className="mr-2"
-            />
-            Inflow
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="transactionType"
-              value="outflow"
-              checked={inputType === "outflow"}
-              onChange={(e) =>
-                setInputType(e.target.value as "inflow" | "outflow")
-              }
-              className="mr-2"
-            />
-            Outflow
-          </label>
+        <div className="mb-2">
+          <RadioGroup
+            name="transactionType"
+            defaultValue="inflow"
+            aria-label="Transaction Type"
+            className="space-y-1"
+          >
+            <RadioField>
+              <Radio value="inflow" />
+              <Label>Inflow</Label>
+            </RadioField>
+            <RadioField>
+              <Radio value="outflow" />
+              <Label>Outflow</Label>
+            </RadioField>
+          </RadioGroup>
         </div>
-        <button
-          type="submit"
-          onClick={() => handleAddTransaction(inputAmount, inputType)}
-          className="w-full rounded bg-blue-500 p-2 text-white"
-        >
+        <Button onClick={() => handleAddTransaction(inputAmount, inputType)}>
           Add
-        </button>
+        </Button>
       </section>
-      <button
-        onClick={() => toast.error("Error", { className: "bg-rose-500" })}
-      >
-        Click me
-      </button>
       {loading && <div>Loading...</div>}
     </div>
   );

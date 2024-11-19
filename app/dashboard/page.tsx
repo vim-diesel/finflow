@@ -4,7 +4,7 @@ import {
   getTodaysMonthlyBudget,
   getCategoriesWithDetails,
   getCategoryGroups,
-} from "@/actions/actions";
+} from "@/actions";
 import HeadingBar from "@/app/dashboard/headingBar";
 import BudgetTable from "./budgetTable";
 import {
@@ -13,7 +13,7 @@ import {
   CategoryGroup,
   CategoryWithDetails,
 } from "@/types/types";
-import { AppError, PlainAppError } from "../../errors/errors";
+import { AppError, PlainAppError } from "@/errors";
 
 // Sort the category groups by priority (Bills, Needs, Wants, and anything else)
 function sortCategoryGroups(categoryGroups: CategoryGroup[]): CategoryGroup[] {
@@ -53,7 +53,7 @@ export default async function Page() {
 
   // Fetch the current monthly budget.
   // Need to extend to allow user to select other months.
-  const currMonthlyBudget: MonthlyBudget | Error = await getTodaysMonthlyBudget(
+  const currMonthlyBudget: MonthlyBudget | PlainAppError = await getTodaysMonthlyBudget(
     budget.id,
   );
 
@@ -72,7 +72,7 @@ export default async function Page() {
     );
   }
 
-  const categories: CategoryWithDetails[] | Error =
+  const categories: CategoryWithDetails[] | PlainAppError =
     await getCategoriesWithDetails(currMonthlyBudget.id);
   if (categories instanceof Error) {
     // We will have to handle this somehow. Depends on the error.

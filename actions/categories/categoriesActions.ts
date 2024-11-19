@@ -35,15 +35,16 @@ export async function getCategoriesWithDetails(
     .select(
       `
     *,
-    monthly_category_details!inner (*)
+    monthly_category_details!left (*)
   `,
     )
     .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
 
   if (error || !categoriesWithDetails) {
-    console.error("Error fetching catories with details:", error);
+    console.error("Error fetching catories with details: ", error);
     return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
   }
+
 
   // Map over the data to flatten `monthly_category_details` to a single object
   const flattenedData = categoriesWithDetails.map((category) => ({
@@ -53,4 +54,42 @@ export async function getCategoriesWithDetails(
 
   // revalidatePath("/dashboard");
   return flattenedData;
+}
+
+// Add a new category to the categories table
+// Inputs:
+// categoryName - the name of the category to add (string)
+//
+// Output: the new category object or an Error
+export async function addCategory(
+  categoryName: string,
+  groupId: number,
+): Promise<null | PlainAppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError(
+      "AUTH_ERROR",
+      "User authentication failed or user not found",
+      authError?.code,
+      authError?.status,
+    ).toPlainObject();
+  }
+
+  const { error } = await supabase
+    .from("categories")
+    .insert([{ name: categoryName, user_id: user.id, groupId: groupId }]);
+
+  if (error) {
+    console.error("Error adding category: ", error);
+    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+  }
+
+  // revalidatePath("/dashboard");
+  return null;
 }
