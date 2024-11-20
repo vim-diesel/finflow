@@ -22,7 +22,6 @@ import {
   DescriptionTerm,
 } from "@/components/description-list";
 import { Divider } from "@/components/divider";
-import { Dropdown } from "@/components/dropdown";
 import { Select } from "@/components/select";
 import { Input } from "@/components/input";
 
@@ -52,14 +51,9 @@ export default function DisplayForm({
   const [loading, setLoading] = React.useState(false);
   const [inputNewCategory, setInputNewCategory] = React.useState<string>("");
   const [inputAmount, setInputAmount] = React.useState<number | string>("");
-  const [transactionType, setTransactionType] = React.useState<string>("inflow");
+  const [transactionType, setTransactionType] =
+    React.useState<string>("inflow");
   const [categoryGroupId, setCategoryGroupId] = React.useState<number>();
-
-  const handleTransactionTypeChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setTransactionType(event.target.value as "inflow" | "outflow");
-  };
 
   async function handleAddCategory() {
     console.log("Adding category...", inputNewCategory, categoryGroupId);
@@ -86,6 +80,7 @@ export default function DisplayForm({
       return;
     } else {
       toast.success("Category added successfully!");
+      setInputNewCategory("");
       setLoading(false);
       return;
     }
@@ -93,16 +88,9 @@ export default function DisplayForm({
 
   async function handleAddTransaction(input: number | string, type: string) {
     setLoading(true);
-
-    console.log("Adding transaction...", input, type);
     const amount = Number(input);
-    if (!amount) {
-      toast.warning("Enter your amount first...", {
-        className: "bg-yellow-200",
-      });
-      setLoading(false);
-      return;
-    } else if (isNaN(Number(amount)) || amount === undefined) {
+
+    if (isNaN(amount)) {
       toast.warning("Amount must be a number...", {
         className: "bg-yellow-200",
       });
@@ -138,6 +126,7 @@ export default function DisplayForm({
     }
 
     toast.success("Transaction added successfully!");
+    setInputAmount("");
     setLoading(false);
     return;
   }
@@ -176,7 +165,7 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Name</div>
             <div className="font-semibold">Assigned</div>
             <div className="font-semibold">Spent</div>
@@ -189,7 +178,7 @@ export default function DisplayForm({
             categoryWithDetails.map((c) => (
               <div
                 key={c.id}
-                className="mb-2 grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
               >
                 <div>{c.name}</div>
                 <div>
@@ -216,7 +205,7 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="grid grid-cols-3 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="mb-2 grid grid-cols-3 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Date</div>
             <div className="font-semibold">Amount</div>
             <div className="font-semibold">Type</div>
@@ -242,9 +231,11 @@ export default function DisplayForm({
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Category</h2>
         <Input
-          name="category"
+          name="category_name"
           placeholder="Category Name"
+          value={inputNewCategory}
           onChange={(e) => setInputNewCategory(e.target.value)}
+          className="max-w-64"
         />
         <Select
           name="categoryGroup"
@@ -272,13 +263,12 @@ export default function DisplayForm({
 
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Transaction</h2>
-        <input
-          type="input"
+        <Input
           name="amount"
           value={inputAmount}
           onChange={(e) => setInputAmount(e.target.value)}
           placeholder="Amount"
-          className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
+          className="max-w-32"
         />
         <div className="my-2">
           <RadioGroup

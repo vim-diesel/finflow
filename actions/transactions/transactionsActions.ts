@@ -73,7 +73,7 @@ export async function addTransaction(
   const { error } = await supabase.from("transactions").insert({
     budget_id: budgetId,
     user_id: user.id,
-    amount,
+    amount: parseFloat(amount.toFixed(2)),
     transaction_type: transactionType,
     category_id: categoryId || null,
     date: date
