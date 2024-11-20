@@ -24,6 +24,7 @@ import {
 import { Divider } from "@/components/divider";
 import { Dropdown } from "@/components/dropdown";
 import { Select } from "@/components/select";
+import { Input } from "@/components/input";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -51,7 +52,7 @@ export default function DisplayForm({
   const [loading, setLoading] = React.useState(false);
   const [inputNewCategory, setInputNewCategory] = React.useState<string>("");
   const [inputAmount, setInputAmount] = React.useState<number | string>("");
-  const [transactionType, setTransactionType] = React.useState<string>("");
+  const [transactionType, setTransactionType] = React.useState<string>("inflow");
   const [categoryGroupId, setCategoryGroupId] = React.useState<number>();
 
   const handleTransactionTypeChange = (
@@ -79,7 +80,8 @@ export default function DisplayForm({
     }
     const res = await addCategory(inputNewCategory, categoryGroupId);
     if (res?.error) {
-      toast.error("Error adding category: " + res.error.message);
+      const errStr = `Error adding category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
       setLoading(false);
       return;
     } else {
@@ -91,6 +93,8 @@ export default function DisplayForm({
 
   async function handleAddTransaction(input: number | string, type: string) {
     setLoading(true);
+
+    console.log("Adding transaction...", input, type);
     const amount = Number(input);
     if (!amount) {
       toast.warning("Enter your amount first...", {
@@ -100,6 +104,12 @@ export default function DisplayForm({
       return;
     } else if (isNaN(Number(amount)) || amount === undefined) {
       toast.warning("Amount must be a number...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    } else if (!type || (type !== "inflow" && type !== "outflow")) {
+      toast.warning("Invalid transaction type...", {
         className: "bg-yellow-200",
       });
       setLoading(false);
@@ -133,7 +143,7 @@ export default function DisplayForm({
   }
 
   return (
-    <div className="p-4">
+    <div className="sm:p-4">
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Budget</h2>
         {!isPlainAppError(budget) && (
@@ -166,7 +176,7 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="grid grid-cols-5 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Name</div>
             <div className="font-semibold">Assigned</div>
             <div className="font-semibold">Spent</div>
@@ -179,7 +189,7 @@ export default function DisplayForm({
             categoryWithDetails.map((c) => (
               <div
                 key={c.id}
-                className="mb-2 grid grid-cols-5 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                className="mb-2 grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
               >
                 <div>{c.name}</div>
                 <div>
@@ -207,7 +217,7 @@ export default function DisplayForm({
         <div className="mb-4 w-full">
           {/* Table Header */}
           <div className="grid grid-cols-3 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
-            <div className="font-semibold">TxID</div>
+            <div className="font-semibold">Date</div>
             <div className="font-semibold">Amount</div>
             <div className="font-semibold">Type</div>
           </div>
@@ -219,7 +229,7 @@ export default function DisplayForm({
                 key={tx.id}
                 className="mb-2 grid grid-cols-3 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
               >
-                <div>{tx.id}</div>
+                <div>{tx.date}</div>
                 <div>{tx.amount}</div>
                 <div>{tx.transaction_type}</div>
               </div>
@@ -231,40 +241,31 @@ export default function DisplayForm({
 
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Category</h2>
-        <input
-          type="input"
+        <Input
           name="category"
           placeholder="Category Name"
-          className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
-          value={inputNewCategory}
           onChange={(e) => setInputNewCategory(e.target.value)}
         />
         <Select
           name="categoryGroup"
-          className="mb-2 max-w-48"
+          className="my-1 max-w-48"
           value={categoryGroupId}
           defaultValue=""
           onChange={(e) => setCategoryGroupId(Number(e.target.value))}
         >
           <option value="" disabled>
-            Select a category&hellip;
+            Select a group&hellip;
           </option>
           {!isPlainAppError(categoryGroups) &&
-            categoryGroups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
+            categoryGroups.map((group) =>
+              group.name === "Inflow" ? null : (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ),
+            )}
         </Select>
         <Button onClick={handleAddCategory}> Add </Button>
-        <h5>Category Group Id</h5>
-        <p>{categoryGroupId}</p>
-        <h5>Category Name</h5>
-        <p>
-          {!isPlainAppError(categoryGroups) &&
-            categoryGroupId &&
-            getCategoryGroupById(categoryGroupId, categoryGroups)?.name}
-        </p>
       </section>
 
       <Divider className="my-6" />
@@ -279,8 +280,7 @@ export default function DisplayForm({
           placeholder="Amount"
           className="mb-2 w-full rounded border p-2 dark:bg-gray-800"
         />
-
-        <div className="mb-2">
+        <div className="my-2">
           <RadioGroup
             name="transactionType"
             defaultValue="inflow"
@@ -298,7 +298,6 @@ export default function DisplayForm({
             </RadioField>
           </RadioGroup>
         </div>
-
         <Button
           onClick={() => handleAddTransaction(inputAmount, transactionType)}
         >
