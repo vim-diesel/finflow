@@ -32,19 +32,19 @@ export async function getCategoriesWithDetails(
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
-    .select(
-      `
-    *,
-    monthly_category_details!left (*)
-  `,
-    )
-    .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
+    .select(`
+      *,
+      monthly_category_details (
+        *
+      )
+      `)
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching catories with details: ", error);
     return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
   }
 
+  console.log("categoriesWithDetails", categoriesWithDetails[0].monthly_category_details);
 
   // Map over the data to flatten `monthly_category_details` to a single object
   const flattenedData = categoriesWithDetails.map((category) => ({

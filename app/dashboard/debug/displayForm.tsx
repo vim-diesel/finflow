@@ -23,7 +23,9 @@ import {
 } from "@/components/description-list";
 import { Divider } from "@/components/divider";
 import { Select } from "@/components/select";
-import { Input } from "@/components/input";
+import { Input, InputGroup } from "@/components/input";
+import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { DateType } from "../../../components/input";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -40,6 +42,14 @@ const getCategoryGroupById = (
   return categoryGroups.find((group) => group.id === categoryGroupId);
 };
 
+const getCurrentDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // app/debug/page.tsx
 export default function DisplayForm({
   budget,
@@ -50,10 +60,11 @@ export default function DisplayForm({
 }: DebugPageProps) {
   const [loading, setLoading] = React.useState(false);
   const [inputNewCategory, setInputNewCategory] = React.useState<string>("");
-  const [inputAmount, setInputAmount] = React.useState<number | string>("");
+  const [inputAmount, setInputAmount] = React.useState<string>("");
   const [transactionType, setTransactionType] =
     React.useState<string>("inflow");
   const [categoryGroupId, setCategoryGroupId] = React.useState<number>();
+  const [date, setDate] = React.useState<DateType>(getCurrentDate());
 
   async function handleAddCategory() {
     console.log("Adding category...", inputNewCategory, categoryGroupId);
@@ -86,7 +97,7 @@ export default function DisplayForm({
     }
   }
 
-  async function handleAddTransaction(input: number | string, type: string) {
+  async function handleAddTransaction(input: string, type: string) {
     setLoading(true);
     const amount = Number(input);
 
@@ -104,20 +115,20 @@ export default function DisplayForm({
       return;
     }
 
-    if (isPlainAppError(budget)) {
-      // this shouldn't happen, if there's an error, it should be handled in the
-      // parent component and this component should not be rendered
-      toast.error("Error getting the budget from server page component...");
+    if (!budget || isPlainAppError(budget)) {
+      toast.error("Budget is not defined or is an error", {
+        className: "bg-rose-500",
+      });
       setLoading(false);
       return;
     }
 
-    // budget cannot be undefined at this stage.
     const response = await addTransaction(
-      budget!.id,
+      budget.id,
       Number(amount),
       transactionType as "inflow" | "outflow",
     );
+
     if (response?.error) {
       const errStr = `Error adding transaction: ${response.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
@@ -137,8 +148,6 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Budget</h2>
         {!isPlainAppError(budget) && (
           <DescriptionList>
-            <DescriptionTerm>Budget ID</DescriptionTerm>
-            <DescriptionDetails>{budget.id}</DescriptionDetails>
             <DescriptionTerm>Budget Name</DescriptionTerm>
             <DescriptionDetails>{budget.name}</DescriptionDetails>
           </DescriptionList>
@@ -263,31 +272,40 @@ export default function DisplayForm({
 
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Transaction</h2>
+        <InputGroup>
+          <CurrencyDollarIcon />
+          <Input
+            name="amount"
+            value={inputAmount}
+            onChange={(e) => setInputAmount(e.target.value)}
+            placeholder="Amount"
+            className="max-w-32"
+          />
+        </InputGroup>
+
+        <RadioGroup
+          name="transactionType"
+          defaultValue="inflow"
+          aria-label="Transaction Type"
+          className="my-2 space-y-1"
+          onChange={setTransactionType}
+        >
+          <RadioField>
+            <Radio value="inflow" />
+            <Label className="w-fit">Inflow</Label>
+          </RadioField>
+          <RadioField>
+            <Radio value="outflow" />
+            <Label className="w-fit">Outflow</Label>
+          </RadioField>
+        </RadioGroup>
         <Input
-          name="amount"
-          value={inputAmount}
-          onChange={(e) => setInputAmount(e.target.value)}
-          placeholder="Amount"
-          className="max-w-32"
+          type="date"
+          name="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="my-2 max-w-32"
         />
-        <div className="my-2">
-          <RadioGroup
-            name="transactionType"
-            defaultValue="inflow"
-            aria-label="Transaction Type"
-            className="space-y-1"
-            onChange={setTransactionType}
-          >
-            <RadioField>
-              <Radio value="inflow" />
-              <Label>Inflow</Label>
-            </RadioField>
-            <RadioField>
-              <Radio value="outflow" />
-              <Label>Outflow</Label>
-            </RadioField>
-          </RadioGroup>
-        </div>
         <Button
           onClick={() => handleAddTransaction(inputAmount, transactionType)}
         >
@@ -296,6 +314,19 @@ export default function DisplayForm({
       </section>
 
       {loading && <div>Loading...</div>}
+
+      <Divider className="my-6" />
+      {/* <section className="mb-8">
+        {Array.isArray(categoryWithDetails) &&
+          categoryWithDetails.map((c) => (
+            <div key={c.id}>
+              <pre >{JSON.stringify(c, null, 2)}</pre>
+              {!isPlainAppError(monthlyBudget) && (
+                <p>Monthly budget id: {monthlyBudget.id}</p>
+              )}
+            </div>
+          ))}
+      </section> */}
     </div>
   );
 }
