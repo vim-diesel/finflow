@@ -3,6 +3,7 @@
 import { AppError, PlainAppError } from "@/errors";
 import { MonthlyCategoryDetails } from "@/types";
 import { createServersideClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 
 // Updates the assigned amount for a category in a monthly budget
 export async function updateAssigned(
@@ -33,20 +34,30 @@ export async function updateAssigned(
     ).toPlainObject();
   }
 
-  const { error } = await supabase
+  const { data: updateData, error: updateError } = await supabase
     .from("monthly_category_details")
-    .update({ amount_assigned: amountAssigned })
-    .eq("monthly_budget_id", monthlyBudgetId)
-    .eq("category_id", categoryId);
+    .upsert(
+      {
+        user_id: user.id,
+        monthly_budget_id: monthlyBudgetId,
+        category_id: categoryId,
+        amount_assigned: amountAssigned,
+      },
+      { onConflict: "monthly_budget_id,category_id" }, // Specify the conflict target
+    );
 
-  if (error) {
-    console.error("Error updating assigned amount: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+  if (updateError) {
+    console.error("Error updating assigned amount: ", updateError);
+    return new AppError(
+      "DB_ERROR",
+      updateError.message,
+      updateError.code,
+    ).toPlainObject();
   }
 
+  revalidatePath("/dashboard");
   return null;
 }
-
 
 export async function getMonthlyCategoryDetails(
   budgetId: number,
@@ -79,4 +90,46 @@ export async function getMonthlyCategoryDetails(
   }
 
   return details;
+}
+
+export async function createMonthlyCategoryDetails(
+  budgetId: number,
+  categoryId: number,
+  monthlyBudgetId: number,
+): Promise<MonthlyCategoryDetails | PlainAppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError(
+      "AUTH_ERROR",
+      "User authentication failed or user not found",
+      authError?.code,
+    ).toPlainObject();
+  }
+
+  const { data, error } = await supabase
+    .from("monthly_category_details")
+    .insert([
+      {
+        category_id: categoryId,
+        monthly_budget_id: monthlyBudgetId,
+        user_id: user.id,
+      },
+    ]);
+
+  if (error) {
+    console.error("Error creating monthly category details: ", error);
+    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+  }
+
+  if (!data) {
+    return new AppError("NOT_FOUND", "No data returned").toPlainObject();
+  }
+
+  return data[0];
 }

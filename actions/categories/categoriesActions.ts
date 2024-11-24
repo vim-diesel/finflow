@@ -44,8 +44,6 @@ export async function getCategoriesWithDetails(
     return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
   }
 
-  console.log("categoriesWithDetails", categoriesWithDetails[0].monthly_category_details);
-
   // Map over the data to flatten `monthly_category_details` to a single object
   const flattenedData = categoriesWithDetails.map((category) => ({
     ...category,
@@ -93,3 +91,6 @@ export async function addCategory(
   revalidatePath("/dashboard");
   return null;
 }
+
+// Update a category in the categories table
+

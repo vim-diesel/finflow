@@ -26,6 +26,16 @@ import { Select } from "@/components/select";
 import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { DateType } from "../../../components/input";
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/dialog";
+import { Field } from "@/components/fieldset";
+import { updateAssigned } from "@/actions/monthlyCategoryDetails";
+import UpdateBox from "./updateBox";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -142,6 +152,43 @@ export default function DisplayForm({
     return;
   }
 
+  async function handleAssignDollars(
+    categoryDetailsId: number,
+    assignedAmount: number,
+  ) {
+    setLoading(true);
+    if (!monthlyBudget || isPlainAppError(monthlyBudget)) {
+      toast.error("Monthly budget is not defined or is an error", {
+        className: "bg-rose-500",
+      });
+      setLoading(false);
+      return;
+    }
+    const amount = Number(assignedAmount);
+    if (isNaN(amount)) {
+      toast.warning("Amount must be a number...", {
+        className: "bg-yellow-200",
+      });
+      setLoading(false);
+      return;
+    }
+    const res = await updateAssigned(
+      monthlyBudget.id,
+      categoryDetailsId,
+      amount,
+    );
+    if (res?.error) {
+      const errStr = `Error adding category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    } else {
+      toast.success("Updated!");
+      setLoading(false);
+      return;
+    }
+  }
+
   return (
     <div className="sm:p-4">
       <section className="mb-8">
@@ -153,9 +200,7 @@ export default function DisplayForm({
           </DescriptionList>
         )}
       </section>
-
       <Divider className="my-6" />
-
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Current Monthly Budget</h2>
         {!isPlainAppError(monthlyBudget) && (
@@ -167,9 +212,14 @@ export default function DisplayForm({
           </DescriptionList>
         )}
       </section>
-
       <Divider className="my-6" />
-
+      {/*
+          *
+          *
+          TODO: Fade $0 amounts, make them clickable to pop up a modal to edit
+          *
+          *
+      */}
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
         <div className="mb-4 w-full">
@@ -184,32 +234,34 @@ export default function DisplayForm({
 
           {/* Table Rows */}
           {Array.isArray(categoryWithDetails) &&
-            categoryWithDetails.map((c) => (
-              <div
-                key={c.id}
-                className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
-              >
-                <div>{c.name}</div>
-                <div>
-                  {c.monthly_category_details &&
-                    c.monthly_category_details.amount_assigned}
+            categoryWithDetails.map((c) => {
+              if (c.name === "Ready to Assign") {
+                return null;
+              }
+              return (
+                <div
+                  key={c.id}
+                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                >
+                  <div>{c.name}</div>
+                  <div>
+                    <UpdateBox c={c} handler={handleAssignDollars} />
+                  </div>
+                  <div>
+                    {c.monthly_category_details &&
+                      c.monthly_category_details.amount_spent}
+                  </div>
+                  <div>{c.target_amount}</div>
+                  <div>
+                    {c.monthly_category_details &&
+                      c.monthly_category_details.carryover_from_previous_month}
+                  </div>
                 </div>
-                <div>
-                  {c.monthly_category_details &&
-                    c.monthly_category_details.amount_spent}
-                </div>
-                <div>{c.target_amount}</div>
-                <div>
-                  {c.monthly_category_details &&
-                    c.monthly_category_details.carryover_from_previous_month}
-                </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </section>
-
       <Divider className="my-6" />
-
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
         <div className="mb-4 w-full">
@@ -234,9 +286,7 @@ export default function DisplayForm({
             ))}
         </div>
       </section>
-
       <Divider className="my-6" />
-
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Category</h2>
         <Input
@@ -267,9 +317,7 @@ export default function DisplayForm({
         </Select>
         <Button onClick={handleAddCategory}> Add </Button>
       </section>
-
       <Divider className="my-6" />
-
       <section className="mb-8">
         <h2 className="mb-3 text-2xl font-bold">Add Transaction</h2>
         <InputGroup>
@@ -312,9 +360,7 @@ export default function DisplayForm({
           Add
         </Button>
       </section>
-
       {loading && <div>Loading...</div>}
-
       <Divider className="my-6" />
       {/* <section className="mb-8">
         {Array.isArray(categoryWithDetails) &&
