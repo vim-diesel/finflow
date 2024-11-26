@@ -10,7 +10,7 @@ import {
 } from "@/types/types";
 
 import { toast } from "sonner";
-import { isPlainAppError, PlainAppError } from "@/errors";
+import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import { addCategory, addTransaction, deleteCategory, updateCategoryName, updateMonthlyGoal } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
@@ -413,17 +413,6 @@ export default function DisplayForm({
       </section>
       {loading && <div>Loading...</div>}
       <Divider className="my-6" />
-      {/* <section className="mb-8">
-        {Array.isArray(categoryWithDetails) &&
-          categoryWithDetails.map((c) => (
-            <div key={c.id}>
-              <pre >{JSON.stringify(c, null, 2)}</pre>
-              {!isPlainAppError(monthlyBudget) && (
-                <p>Monthly budget id: {monthlyBudget.id}</p>
-              )}
-            </div>
-          ))}
-      </section> */}
     </div>
   );
 }

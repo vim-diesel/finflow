@@ -7,8 +7,16 @@ export function isPlainAppError(obj: any): obj is PlainAppError {
     "error" in obj &&
     typeof obj.error === "object" &&
     "name" in obj.error &&
+    typeof obj.error.name === "string" &&
     "message" in obj.error &&
+    typeof obj.error.message === "string" &&
     "code" in obj.error &&
-    "status" in obj.error
+    typeof obj.error.code === "string" &&
+    "status" in obj.error &&
+    typeof obj.error.status === "number" &&
+    "details" in obj.error &&
+    typeof obj.error.details === "string" &&
+    "hint" in obj.error &&
+    typeof obj.error.hint === "object"
   );
 }
