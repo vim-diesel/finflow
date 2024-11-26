@@ -23,6 +23,7 @@ export default function UpdateAssignedBox({
     c.monthly_category_details?.amount_assigned as unknown as string,
   );
 
+
   return (
     <>
       <Button

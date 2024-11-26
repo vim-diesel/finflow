@@ -9,7 +9,7 @@ import {
 import { Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
-import { useState } from "react";
+import React, { useState } from "react";
 
 export default function UpdateGoalBox({
   c,
@@ -19,8 +19,8 @@ export default function UpdateGoalBox({
   handler: (categoryId: number, amount: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [goalAmount, setGoalAmount] = useState(
-    c.target_amount as unknown as string,
+  const [goalAmount, setGoalAmount] = useState<string | undefined>(
+    c.target_amount?.toString() || "",
   );
 
   return (
@@ -41,9 +41,9 @@ export default function UpdateGoalBox({
               : "0"}
       </Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
-        <DialogTitle>Assign Dollars</DialogTitle>
+        <DialogTitle>Your Goal</DialogTitle>
         <DialogDescription>
-          Assign your monthly available budget to {c.name}
+          View and edit your goal for {c.name}
         </DialogDescription>
         <DialogBody>
           <Field>
@@ -52,7 +52,7 @@ export default function UpdateGoalBox({
               name="amount"
               placeholder="$0.00"
               autoFocus
-              value={goalAmount !== null ? goalAmount.toString() : ""}
+              value={goalAmount === "0" || !goalAmount ? "" : goalAmount?.toString()}
               onChange={(e) => {
                 const value = e.target.value;
                 if (/^\d*\.?\d{0,2}$/.test(value)) {
@@ -69,7 +69,7 @@ export default function UpdateGoalBox({
           <Button
             onClick={() => {
               setIsOpen(false);
-              const amount = parseFloat(goalAmount);
+              const amount = parseFloat(goalAmount || "0");
               if (!isNaN(amount) && amount >= 0) {
                 handler(c.id, amount);
               }
