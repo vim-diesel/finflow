@@ -58,13 +58,13 @@ export default function UpdateCategoryNameBox({
               const toastStr = `Delete category "${category.name}"?`;
               toast(toastStr, {
                 className: "dark:text-white dark:bg-gray-700",
-                duration: 60000,
+                position: "top-center",
                 action: (
-                  <Button className="w-1/3" color="red">
+                  <Button color="red">
                     Delete
                   </Button>
                 ),
-                cancel: <Button className="w-1/3">Cancel</Button>,
+                cancel: <Button onClick={() => toast.dismiss()}>Cancel</Button>,
               });
             }}
           >

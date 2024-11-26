@@ -11,7 +11,7 @@ import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
 import { useState } from "react";
 
-export default function UpdateAssignedBox({
+export default function UpdateGoalBox({
   c,
   handler,
 }: {
@@ -19,8 +19,8 @@ export default function UpdateAssignedBox({
   handler: (categoryId: number, amount: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [assignedAmount, setAssignedAmount] = useState(
-    c.monthly_category_details?.amount_assigned as unknown as string,
+  const [goalAmount, setGoalAmount] = useState(
+    c.target_amount as unknown as string,
   );
 
   return (
@@ -32,11 +32,13 @@ export default function UpdateAssignedBox({
         onClick={() => setIsOpen(true)}
       >
         $
-        {c.monthly_category_details?.amount_assigned === 0 
-        ? 0
-        : c.monthly_category_details?.amount_assigned !== null && c.monthly_category_details.amount_assigned % 1 === 0
-        ? c.monthly_category_details.amount_assigned
-        : c.monthly_category_details?.amount_assigned?.toFixed(2) ?? 0}
+        {c.target_amount === 0
+          ? "0"
+          : c.target_amount !== null && c.target_amount % 1 === 0
+            ? c.target_amount
+            : c.target_amount !== null
+              ? c.target_amount.toFixed(2)
+              : "0"}
       </Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
         <DialogTitle>Assign Dollars</DialogTitle>
@@ -44,21 +46,21 @@ export default function UpdateAssignedBox({
           Assign your monthly available budget to {c.name}
         </DialogDescription>
         <DialogBody>
-            <Field>
+          <Field>
             <Label>Amount</Label>
             <Input
               name="amount"
               placeholder="$0.00"
               autoFocus
-              value={assignedAmount !== null ? assignedAmount.toString() : ""}
+              value={goalAmount !== null ? goalAmount.toString() : ""}
               onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d*\.?\d{0,2}$/.test(value)) {
-                setAssignedAmount(value);
-              }
+                const value = e.target.value;
+                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                  setGoalAmount(value);
+                }
               }}
             />
-            </Field>
+          </Field>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setIsOpen(false)}>
@@ -67,7 +69,7 @@ export default function UpdateAssignedBox({
           <Button
             onClick={() => {
               setIsOpen(false);
-              const amount = parseFloat(assignedAmount);
+              const amount = parseFloat(goalAmount);
               if (!isNaN(amount) && amount >= 0) {
                 handler(c.id, amount);
               }

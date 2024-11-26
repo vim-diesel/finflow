@@ -192,3 +192,66 @@ export async function deleteCategory(
   revalidatePath("/dashboard");
   return null;
 }
+
+// Update the monthly goal of an existing category
+// Inputs:
+// categoryId - the ID of the category to update (number)
+// newMonthlyGoal - the new monthly goal value (number)
+//
+// Output: null or an Error
+export async function updateMonthlyGoal(
+  categoryId: number,
+  goalAmount?: number,
+  frequency?: "monthly" | "weekly" | "yearly" | "custom",
+  dueDay?: number,
+  repeatInterval?: number,  
+  repeatUnit?: "day" | "week" | "month" | "year",
+  repeatOn?: boolean,
+  snoozed?: boolean,
+  dueDate?: Date,
+): Promise<null | PlainAppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
+  }
+
+  const updateData: any = {};
+  if (goalAmount !== undefined) updateData.target_amount = goalAmount;
+  if (frequency !== undefined) updateData.frequency = frequency;
+  if (dueDay !== undefined) updateData.due_day = dueDay;
+  if (repeatInterval !== undefined) updateData.repeat_interval = repeatInterval;
+  if (repeatUnit !== undefined) updateData.repeat_unit = repeatUnit;
+  if (repeatOn !== undefined) updateData.repeat_on = repeatOn;
+  if (snoozed !== undefined) updateData.snoozed = snoozed;
+  if (dueDate !== undefined) updateData.due_date = dueDate;
+
+  const { error } = await supabase
+    .from("categories")
+    .update(updateData)
+    .eq("id", categoryId)
+    .eq("user_id", user.id)
+    .select("*");
+
+  if (error) {
+    console.error("Error updating monthly goal: ", error);
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
+  }
+
+  revalidatePath("/dashboard");
+  return null;
+}

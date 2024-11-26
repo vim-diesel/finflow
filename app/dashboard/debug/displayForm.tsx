@@ -11,7 +11,7 @@ import {
 
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { addCategory, addTransaction, updateCategoryName } from "@/actions";
+import { addCategory, addTransaction, updateCategoryName, updateMonthlyGoal } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
 import { Radio } from "@/components/radio";
@@ -27,8 +27,9 @@ import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { DateType } from "@/components/input";
 import { updateAssigned } from "@/actions/monthlyCategoryDetails";
-import UpdateBox from "./updateAssignedBox";
 import UpdateCategoryNameBox from "./updateCategoryNameBox";
+import UpdateAssignedBox from "./updateAssignedBox";
+import UpdateGoalBox from "./updateGoalBox";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -183,6 +184,21 @@ export default function DisplayForm({
     }
   }
 
+  async function handleUpdateGoal(categoryId: number, amount: number) {
+    setLoading(true);
+    const res = await updateMonthlyGoal(categoryId, amount);
+    if (res?.error) {
+      const errStr = `Error updating goal: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    } else {
+      toast.success("Goal updated successfully!");
+      setLoading(false);
+      return;
+    }
+  }
+
   async function handleUpdateCategoryName(catId: number, newName: string) {
     console.log("Updating category name...", catId, newName);
     setLoading(true);
@@ -257,7 +273,7 @@ export default function DisplayForm({
                     handler={handleUpdateCategoryName}
                   />
                   <div>
-                    <UpdateBox c={c} handler={handleAssignDollars} />
+                    <UpdateAssignedBox c={c} handler={handleAssignDollars} />
                   </div>
                     <div>
                       $
@@ -268,12 +284,8 @@ export default function DisplayForm({
                       : c.monthly_category_details?.amount_spent !== null ? c.monthly_category_details.amount_spent.toFixed(2) : "0"}
                     </div>
                     <div>
-                      $
-                      {c.target_amount === 0
-                      ? "0"
-                      : c.target_amount !== null && c.target_amount % 1 === 0
-                      ? c.target_amount
-                      : c.target_amount !== null ? c.target_amount.toFixed(2) : "0"}
+                      <UpdateGoalBox c={c} handler={handleUpdateGoal} />
+
                     </div>
                 </div>
               );
