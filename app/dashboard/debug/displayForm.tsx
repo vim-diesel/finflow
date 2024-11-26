@@ -156,8 +156,8 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
-    const amount = Number(assignedAmount);
-    if (isNaN(amount)) {
+    const amount = Number(assignedAmount.toFixed(2));
+    if (isNaN(assignedAmount)) {
       toast.warning("Amount must be a number...", {
         className: "bg-yellow-200",
       });
@@ -216,12 +216,11 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Name</div>
             <div className="font-semibold">Assigned</div>
             <div className="font-semibold">Spent</div>
             <div className="font-semibold">Goal</div>
-            <div className="font-semibold">Carryover</div>
           </div>
 
           {/* Table Rows */}
@@ -233,21 +232,17 @@ export default function DisplayForm({
               return (
                 <div
                   key={c.id}
-                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
                 >
                   <div>{c.name}</div>
                   <div>
                     <UpdateBox c={c} handler={handleAssignDollars} />
                   </div>
                   <div>
-                    {c.monthly_category_details &&
+                    ${c.monthly_category_details &&
                       c.monthly_category_details.amount_spent}
                   </div>
-                  <div>{c.target_amount}</div>
-                  <div>
-                    {c.monthly_category_details &&
-                      c.monthly_category_details.carryover_from_previous_month}
-                  </div>
+                  <div>${c.target_amount}</div>
                 </div>
               );
             })}

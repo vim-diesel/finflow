@@ -20,7 +20,7 @@ export default function UpdateBox({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
-    c.monthly_category_details?.amount_assigned
+    c.monthly_category_details?.amount_assigned as unknown as string,
   );
 
   return (
@@ -41,21 +41,21 @@ export default function UpdateBox({
           Assign your monthly available budget to {c.name}
         </DialogDescription>
         <DialogBody>
-          <Field>
+            <Field>
             <Label>Amount</Label>
             <Input
               name="amount"
               placeholder="$0.00"
               autoFocus
-              value={assignedAmount ?? ""}
+              value={assignedAmount !== null ? assignedAmount.toString() : ""}
               onChange={(e) => {
-                const value = e.target.value;
-                if (!isNaN(Number(value))) {
-                  setAssignedAmount(Number(value));
-                }
+              const value = e.target.value;
+              if (/^\d*\.?\d{0,2}$/.test(value)) {
+                setAssignedAmount(value);
+              }
               }}
             />
-          </Field>
+            </Field>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setIsOpen(false)}>
@@ -64,8 +64,9 @@ export default function UpdateBox({
           <Button
             onClick={() => {
               setIsOpen(false);
-              if (assignedAmount !== null && assignedAmount >= 0) {
-                handler(c.id, assignedAmount);
+              const amount = parseFloat(assignedAmount);
+              if (!isNaN(amount) && amount >= 0) {
+                handler(c.id, amount);
               }
             }}
           >

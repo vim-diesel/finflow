@@ -46,7 +46,7 @@ export default async function DebugPage() {
 
 
   const categoryWithDetails: CategoryWithDetails[] | PlainAppError =
-    await getCategoriesWithDetails(budget.id);
+    await getCategoriesWithDetails(currMonthlyBudget.id);
 
   if (isPlainAppError(categoryWithDetails)) {
     return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
@@ -63,8 +63,8 @@ export default async function DebugPage() {
     );
   }
 
-  const testSupabase = await updateAssigned(13, 3, 300);
-  console.log("testSupabase: ", testSupabase);
+/*   const testSupabase = await updateAssigned(13, 3, 300);
+  console.log("testSupabase: ", testSupabase); */
 
   return (
     <>
