@@ -20,7 +20,7 @@ export default function UpdateAssignedBox({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
-    c.monthly_category_details?.amount_assigned as unknown as string,
+    c.monthly_category_details ? c.monthly_category_details.amount_assigned : "",
   );
 
 
@@ -71,7 +71,7 @@ export default function UpdateAssignedBox({
           <Button
             onClick={() => {
               setIsOpen(false);
-              const amount = parseFloat(assignedAmount);
+              const amount = parseFloat(assignedAmount?.toString() || "0");
               if (!isNaN(amount) && amount >= 0) {
                 handler(c.id, amount);
               }
