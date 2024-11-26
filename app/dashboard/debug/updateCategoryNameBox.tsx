@@ -11,14 +11,15 @@ import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
-import { set } from "zod";
 
 export default function UpdateCategoryNameBox({
   category,
-  handler,
+  handlerUpdate,
+  handlerDelete,
 }: {
   category: CategoryWithDetails;
-  handler: (categoryId: number, newName: string) => void;
+  handlerUpdate: (categoryId: number, newName: string) => void;
+  handlerDelete: (categoryId: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputName, setInputName] = useState(category.name);
@@ -31,7 +32,7 @@ export default function UpdateCategoryNameBox({
         outline
         onClick={() => setIsOpen(true)}
       >
-        <span className=" truncate">{category.name}</span>
+        <span className="truncate">{category.name}</span>
       </Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
         <DialogTitle>Edit</DialogTitle>
@@ -57,10 +58,16 @@ export default function UpdateCategoryNameBox({
               setIsOpen(false);
               const toastStr = `Delete category "${category.name}"?`;
               toast(toastStr, {
-                className: "dark:text-white dark:bg-gray-700",
-                position: "top-center",
+                className: "w-full dark:text-white dark:bg-gray-700",
+                position: "top-left",
                 action: (
-                  <Button color="red">
+                  <Button
+                    color="red"
+                    onClick={() => {
+                      handlerDelete(category.id);
+                      toast.dismiss();
+                    }}
+                  >
                     Delete
                   </Button>
                 ),
@@ -76,7 +83,7 @@ export default function UpdateCategoryNameBox({
           <Button
             onClick={() => {
               setIsOpen(false);
-              handler(category.id, inputName);
+              handlerUpdate(category.id, inputName);
             }}
           >
             Set

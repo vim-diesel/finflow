@@ -11,7 +11,7 @@ import {
 
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { addCategory, addTransaction, updateCategoryName, updateMonthlyGoal } from "@/actions";
+import { addCategory, addTransaction, deleteCategory, updateCategoryName, updateMonthlyGoal } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
 import { Radio } from "@/components/radio";
@@ -215,6 +215,22 @@ export default function DisplayForm({
     }
   }
 
+  async function handleDeleteCategory(categoryId: number) {
+    console.log("Deleting category...", categoryId);
+    setLoading(true);
+    const res = await deleteCategory(categoryId);
+    if (res?.error) {
+      const errStr = `Error deleting category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    } else {
+      toast.success("Category deleted successfully!");
+      setLoading(false);
+      return;
+    }
+  }
+
   return (
     <div className="sm:p-4">
       <section className="mb-8">
@@ -270,14 +286,18 @@ export default function DisplayForm({
                 >
                   <UpdateCategoryNameBox
                     category={c}
-                    handler={handleUpdateCategoryName}
+                    handlerUpdate={handleUpdateCategoryName}
+                    handlerDelete={handleDeleteCategory}
                   />
                   <div>
                     <UpdateAssignedBox c={c} handler={handleAssignDollars} />
                   </div>
                     <div>
                       $
-                      {c.monthly_category_details?.amount_spent === 0
+                      {
+                      c.monthly_category_details === null || c.monthly_category_details?.amount_spent === null 
+                      ? "0"
+                      : c.monthly_category_details?.amount_spent === 0
                       ? "0"
                       : c.monthly_category_details?.amount_spent !== null && c.monthly_category_details?.amount_spent % 1 === 0
                       ? c.monthly_category_details?.amount_spent

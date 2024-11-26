@@ -32,11 +32,14 @@ export default function UpdateAssignedBox({
         onClick={() => setIsOpen(true)}
       >
         $
-        {c.monthly_category_details?.amount_assigned === 0 
-        ? 0
-        : c.monthly_category_details?.amount_assigned !== null && c.monthly_category_details.amount_assigned % 1 === 0
-        ? c.monthly_category_details.amount_assigned
-        : c.monthly_category_details?.amount_assigned?.toFixed(2) ?? 0}
+        {c.monthly_category_details === null
+          ? 0
+          : c.monthly_category_details?.amount_assigned === 0
+            ? 0
+            : c.monthly_category_details?.amount_assigned !== null &&
+                c.monthly_category_details.amount_assigned % 1 === 0
+              ? c.monthly_category_details.amount_assigned
+              : (c.monthly_category_details?.amount_assigned?.toFixed(2) ?? 0)}
       </Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
         <DialogTitle>Assign Dollars</DialogTitle>
@@ -44,21 +47,21 @@ export default function UpdateAssignedBox({
           Assign your monthly available budget to {c.name}
         </DialogDescription>
         <DialogBody>
-            <Field>
+          <Field>
             <Label>Amount</Label>
             <Input
               name="amount"
               placeholder="$0.00"
               autoFocus
-              value={assignedAmount !== null ? assignedAmount.toString() : ""}
+              value={assignedAmount !== null ? assignedAmount?.toString() : ""}
               onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d*\.?\d{0,2}$/.test(value)) {
-                setAssignedAmount(value);
-              }
+                const value = e.target.value;
+                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                  setAssignedAmount(value);
+                }
               }}
             />
-            </Field>
+          </Field>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setIsOpen(false)}>
