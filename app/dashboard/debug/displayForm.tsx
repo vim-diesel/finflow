@@ -14,7 +14,7 @@ import { isPlainAppError, PlainAppError } from "@/errors";
 import { addCategory, addTransaction } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
-import { Radio } from "../../../components/radio";
+import { Radio } from "@/components/radio";
 import { Label } from "@headlessui/react";
 import {
   DescriptionDetails,
@@ -25,15 +25,7 @@ import { Divider } from "@/components/divider";
 import { Select } from "@/components/select";
 import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
-import { DateType } from "../../../components/input";
-import {
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/dialog";
-import { Field } from "@/components/fieldset";
+import { DateType } from "@/components/input";
 import { updateAssigned } from "@/actions/monthlyCategoryDetails";
 import UpdateBox from "./updateBox";
 
@@ -177,7 +169,7 @@ export default function DisplayForm({
       categoryDetailsId,
       amount,
     );
-    if (res?.error) {
+    if (isPlainAppError(res)) {
       const errStr = `Error adding category: ${res.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
       setLoading(false);
@@ -241,7 +233,7 @@ export default function DisplayForm({
               return (
                 <div
                   key={c.id}
-                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
                 >
                   <div>{c.name}</div>
                   <div>

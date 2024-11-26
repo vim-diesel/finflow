@@ -3,4 +3,4 @@ export { AppError } from './AppError';
 // export { AuthenticationError } from './AuthenticationError';
 // export { ResourceNotFoundError } from './ResourceNotFoundError';
 export { isPlainAppError } from './typeGuards';
-export type { PlainAppError } from './AppError';
+export type { PlainAppError, AppErrorOptions } from './AppError';

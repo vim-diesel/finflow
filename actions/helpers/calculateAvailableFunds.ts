@@ -25,17 +25,20 @@ export async function getAvailableAmount(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-      authError?.status,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   // Validate currMonth
   if (!(month instanceof Date) || isNaN(month.getTime())) {
-    return new AppError("VALIDATION_ERROR", "Invalid date provided").toPlainObject();
+    return new AppError({
+      name: "VALIDATION_ERROR",
+      message: "Invalid date provided"
+    }).toPlainObject();
   }
 
   // Get all transactions up to the current month
@@ -57,11 +60,11 @@ export async function getAvailableAmount(
 
   if (transactionsError) {
     console.error("Error fetching transactions: ", transactionsError);
-    return new AppError(
-      "DB_ERROR",
-      transactionsError?.message,
-      transactionsError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: transactionsError?.message,
+      code: transactionsError?.code,
+    }).toPlainObject();
   } else if (!transactions) {
     return null;
   }
@@ -79,11 +82,11 @@ export async function getAvailableAmount(
   // TODO: Check if this is true and remove the second if statement.
   if (bugdetsError) {
     console.error("Error fetching monthly budgets: ", bugdetsError);
-    return new AppError(
-      "DB_ERROR",
-      bugdetsError.message,
-      bugdetsError.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: bugdetsError.message,
+      code: bugdetsError.code,
+    }).toPlainObject();
   } else if (!monthlyBudgets) {
     return null;
   }
@@ -102,11 +105,11 @@ export async function getAvailableAmount(
   // TODO: Same here.
   if (categoryError) {
     console.error("Error fetching monthly category details: ", categoryError);
-    return new AppError(
-      "DB_ERROR",
-      categoryError.message,
-      categoryError.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: categoryError.message,
+      code: categoryError.code,
+    }).toPlainObject();
   } else if (!monthlyCategoryDetails) {
     return null;
   }
@@ -138,11 +141,6 @@ export async function getAvailableAmount(
   return availableAmount;
 }
 
-
-// *************************
-
-
-
 // I don't think we need to export this. Just use it in other server actions
 // to recalulate the total available amount after a transaction is added.
 export async function calculateAvailableAmount(
@@ -157,11 +155,11 @@ export async function calculateAvailableAmount(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    );
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    });
   }
 
   const { data: transactions, error: transactionError } = await supabase
@@ -172,11 +170,11 @@ export async function calculateAvailableAmount(
 
   if (transactionError) {
     console.error("Error fetching transactions: ", transactionError);
-    return new AppError(
-      "DB_ERROR",
-      transactionError.message,
-      transactionError.code,
-    );
+    return new AppError({
+      name: "DB_ERROR",
+      message: transactionError.message,
+      code: transactionError.code,
+    });
   } else if (!transactions) {
     return 0;
   }
@@ -189,7 +187,11 @@ export async function calculateAvailableAmount(
 
   if (categoryError || !monthlyCategoryDetails) {
     console.error("Error fetching monthly category details: ", categoryError);
-    return new AppError("DB_ERROR", categoryError.message, categoryError.code);
+    return new AppError({
+      name: "DB_ERROR",
+      message: categoryError.message,
+      code: categoryError.code,
+    });
   }
 
   const totalInflow = transactions

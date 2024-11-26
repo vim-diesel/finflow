@@ -24,11 +24,11 @@ export async function getTodaysMonthlyBudget(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    }).toPlainObject();
   }
 
   const today = new Date();
@@ -55,7 +55,11 @@ export async function getTodaysMonthlyBudget(
       return createMonthlyBudget(budgetId, new Date());
     }
     console.error("Error fetching current monthly budgets: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   // revalidatePath("/dashboard");
@@ -76,11 +80,11 @@ export async function createMonthlyBudget(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    }).toPlainObject();
   }
 
   const firstDayOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -99,7 +103,11 @@ export async function createMonthlyBudget(
 
   if (error || !data) {
     console.error("Error fetching monthly budgets: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   return data;

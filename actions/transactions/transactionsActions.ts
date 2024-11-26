@@ -32,11 +32,11 @@ export async function addTransaction(
   budgetId: number,
   amount: number,
   transactionType: "inflow" | "outflow",
-  categoryId?: number,
-  date?: Date,
-  note?: string,
-  cleared?: boolean,
-  payee?: string,
+  categoryId?: number | null,
+  date?: Date | null,
+  note?: string | null,
+  cleared?: boolean | undefined,
+  payee?: string | null,
 ): Promise<null | PlainAppError> {
   const supabase = createServersideClient();
   const {
@@ -44,36 +44,19 @@ export async function addTransaction(
     error: authError,
   } = await supabase.auth.getUser();
 
-  // Return our custom error type if there is an auth error from Supabase
-  if (authError || !user?.id) {
+  if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
-  // Validate amount
-  if (amount < 0 || isNaN(amount)) {
-    return new AppError(
-      "VALIDATION_ERROR",
-      "Transaction amount must be non-negative",
-    ).toPlainObject();
-  }
-
-  // Validate transaction type
-  if (transactionType !== "inflow" && transactionType !== "outflow") {
-    return new AppError(
-      "VALIDATION_ERROR",
-      "Invalid transaction type",
-    ).toPlainObject();
-  }
-
-  const { error } = await supabase.from("transactions").insert({
+  const { data, error } = await supabase.from("transactions").insert({
     budget_id: budgetId,
-    user_id: user.id,
-    amount: parseFloat(amount.toFixed(2)),
+    amount,
     transaction_type: transactionType,
     category_id: categoryId || null,
     date: date
@@ -82,11 +65,18 @@ export async function addTransaction(
     note: note || "",
     cleared: cleared !== undefined ? cleared : true,
     payee: payee || null,
+    user_id: user.id,
   });
 
   if (error) {
     console.error("Error inserting transaction: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+      status: 500,
+      details: error.details,
+    }).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -104,24 +94,29 @@ export async function getTransactions(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   const { data: transactions, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("budget_id", budgetId)
-    .order("date", { ascending: false });
+    .eq("budget_id", budgetId);
 
   if (error) {
     console.error("Error fetching transactions: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+      status: 500,
+      details: error.details,
+    }).toPlainObject();
   }
 
-  // revalidatePath("/dashboard");
   return transactions;
 }

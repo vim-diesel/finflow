@@ -22,26 +22,33 @@ export async function getCategoriesWithDetails(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-      authError?.status,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
-    .select(`
+    .select(
+      `
       *,
       monthly_category_details (
         *
       )
-      `)
+    `,
+    )
+    .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
 
   if (error || !categoriesWithDetails) {
-    console.error("Error fetching catories with details: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    console.error("Error fetching categories with details: ", error);
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   // Map over the data to flatten `monthly_category_details` to a single object
@@ -71,12 +78,12 @@ export async function addCategory(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-      authError?.status,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   const { error } = await supabase
@@ -85,7 +92,11 @@ export async function addCategory(
 
   if (error) {
     console.error("Error adding category: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   revalidatePath("/dashboard");
@@ -93,4 +104,3 @@ export async function addCategory(
 }
 
 // Update a category in the categories table
-

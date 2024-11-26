@@ -20,12 +20,18 @@ export default function UpdateBox({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
-    c.monthly_category_details?.amount_assigned,
+    c.monthly_category_details?.amount_assigned
   );
 
   return (
     <>
-      <Button type="button" onClick={() => setIsOpen(true)}>
+      <Button
+        type="button"
+        className="gap-0 px-2 py-1"
+        outline
+        onClick={() => setIsOpen(true)}
+      >
+        $
         {c.monthly_category_details &&
           c.monthly_category_details.amount_assigned}
       </Button>

@@ -16,12 +16,12 @@ export async function getCategoryGroups(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-      authError?.status,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   const { data, error } = await supabase
@@ -32,7 +32,12 @@ export async function getCategoryGroups(
 
   if (error || !data) {
     console.error("Error fetching category groups: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+      status: 500,
+    }).toPlainObject();
   }
 
   return data;

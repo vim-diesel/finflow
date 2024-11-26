@@ -10,7 +10,7 @@ export async function updateAssigned(
   monthlyBudgetId: number,
   categoryId: number,
   amountAssigned: number,
-): Promise<null | PlainAppError> {
+): Promise<MonthlyCategoryDetails | PlainAppError> {
   const supabase = createServersideClient();
   const {
     data: { user },
@@ -19,22 +19,22 @@ export async function updateAssigned(
 
   if (authError || !user?.id) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-      authError?.status,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
   }
 
   if (amountAssigned < 0) {
-    return new AppError(
-      "VALIDATION_ERROR",
-      "Assigned amount must be non-negative",
-    ).toPlainObject();
+    return new AppError({
+      name: "VALIDATION_ERROR",
+      message: "Assigned amount must be non-negative",
+    }).toPlainObject();
   }
 
-  const { data: updateData, error: updateError } = await supabase
+  const { data: upsertData, error: upsertError } = await supabase
     .from("monthly_category_details")
     .upsert(
       {
@@ -43,25 +43,36 @@ export async function updateAssigned(
         category_id: categoryId,
         amount_assigned: amountAssigned,
       },
-      { onConflict: "monthly_budget_id,category_id" }, // Specify the conflict target
-    );
+      { onConflict: "monthly_budget_id,category_id" },
+    )
+    .select()
+    .single();
 
-  if (updateError) {
-    console.error("Error updating assigned amount: ", updateError);
-    return new AppError(
-      "DB_ERROR",
-      updateError.message,
-      updateError.code,
-    ).toPlainObject();
+  if (upsertError) {
+    console.error("Error upserting assigned amount: ", upsertError);
+    return new AppError({
+      name: "DB_ERROR",
+      message: upsertError.message,
+      code: upsertError.code,
+      status: 500,
+      details: upsertError.details,
+      hint: {
+        attemptedUpsert: {
+          user_id: user.id,
+          monthly_budget_id: monthlyBudgetId,
+          category_id: categoryId,
+          amount_assigned: amountAssigned,
+        },
+      },
+    }).toPlainObject();
   }
 
   revalidatePath("/dashboard");
-  return null;
+  return upsertData;
 }
 
 export async function getMonthlyCategoryDetails(
-  budgetId: number,
-  month: string,
+  monthlyBudgetId: number,
 ): Promise<MonthlyCategoryDetails[] | PlainAppError> {
   const supabase = createServersideClient();
   const {
@@ -71,22 +82,25 @@ export async function getMonthlyCategoryDetails(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    }).toPlainObject();
   }
 
   const { data: details, error } = await supabase
     .from("monthly_category_details")
     .select("*")
-    .eq("budget_id", budgetId)
-    .eq("month", month);
+    .eq("monthly_budget_id", monthlyBudgetId);
 
   if (error) {
     console.error("Error fetching monthly category details: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   return details;
@@ -105,11 +119,11 @@ export async function createMonthlyCategoryDetails(
 
   if (authError || !user) {
     console.error("Error authenticating user: ", authError?.message);
-    return new AppError(
-      "AUTH_ERROR",
-      "User authentication failed or user not found",
-      authError?.code,
-    ).toPlainObject();
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    }).toPlainObject();
   }
 
   const { data, error } = await supabase
@@ -124,11 +138,18 @@ export async function createMonthlyCategoryDetails(
 
   if (error) {
     console.error("Error creating monthly category details: ", error);
-    return new AppError("DB_ERROR", error.message, error.code).toPlainObject();
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
   }
 
   if (!data) {
-    return new AppError("NOT_FOUND", "No data returned").toPlainObject();
+    return new AppError({
+      name: "NOT_FOUND",
+      message: "No data returned",
+    }).toPlainObject();
   }
 
   return data[0];

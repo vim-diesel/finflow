@@ -6,7 +6,7 @@ import {
   MonthlyBudget,
   Transaction,
 } from "@/types/types";
-import { AppError, isPlainAppError, PlainAppError } from "@/errors";
+import { isPlainAppError, PlainAppError } from "@/errors";
 import {
   getDefaultBudget,
   getTodaysMonthlyBudget,
@@ -16,6 +16,8 @@ import {
 } from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
+import { updateAssigned } from "@/actions/monthlyCategoryDetails";
+
 
 // app/debug/page.tsx
 export default async function DebugPage() {
@@ -32,6 +34,7 @@ export default async function DebugPage() {
     return <div>TX Fetch Error: {txs.error.message}</div>;
   }
 
+  // Todo: Fetch monthly budget from query params. If no params exist, default to current month.
   const currMonthlyBudget: MonthlyBudget | PlainAppError =
     await getTodaysMonthlyBudget(budget.id);
 
@@ -41,6 +44,7 @@ export default async function DebugPage() {
     );
   }
 
+
   const categoryWithDetails: CategoryWithDetails[] | PlainAppError =
     await getCategoriesWithDetails(budget.id);
 
@@ -48,12 +52,19 @@ export default async function DebugPage() {
     return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
   }
 
-  const categoryGroups: CategoryGroup[] | PlainAppError = await getCategoryGroups(budget.id);
+
+
+  const categoryGroups: CategoryGroup[] | PlainAppError =
+    await getCategoryGroups(budget.id);
 
   if (isPlainAppError(categoryGroups)) {
-    return <div>Category Groups Fetch Error: {categoryGroups.error.message}</div>;
+    return (
+      <div>Category Groups Fetch Error: {categoryGroups.error.message}</div>
+    );
   }
 
+  const testSupabase = await updateAssigned(13, 3, 300);
+  console.log("testSupabase: ", testSupabase);
 
   return (
     <>
