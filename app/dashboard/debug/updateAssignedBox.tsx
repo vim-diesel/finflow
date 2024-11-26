@@ -32,8 +32,11 @@ export default function UpdateBox({
         onClick={() => setIsOpen(true)}
       >
         $
-        {c.monthly_category_details &&
-          c.monthly_category_details.amount_assigned}
+        {c.monthly_category_details?.amount_assigned === 0 
+        ? 0
+        : c.monthly_category_details?.amount_assigned !== null && c.monthly_category_details.amount_assigned % 1 === 0
+        ? c.monthly_category_details.amount_assigned
+        : c.monthly_category_details?.amount_assigned?.toFixed(2) ?? 0}
       </Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
         <DialogTitle>Assign Dollars</DialogTitle>

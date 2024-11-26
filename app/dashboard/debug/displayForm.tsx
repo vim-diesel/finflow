@@ -11,7 +11,7 @@ import {
 
 import { toast } from "sonner";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { addCategory, addTransaction } from "@/actions";
+import { addCategory, addTransaction, updateCategoryName } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
 import { Radio } from "@/components/radio";
@@ -27,7 +27,8 @@ import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { DateType } from "@/components/input";
 import { updateAssigned } from "@/actions/monthlyCategoryDetails";
-import UpdateBox from "./updateBox";
+import UpdateBox from "./updateAssignedBox";
+import UpdateCategoryNameBox from "./updateCategoryNameBox";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -169,13 +170,30 @@ export default function DisplayForm({
       categoryDetailsId,
       amount,
     );
+
     if (isPlainAppError(res)) {
-      const errStr = `Error adding category: ${res.error.message}`;
+      const errStr = `Error updating assigned dollars: ${res.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
       setLoading(false);
       return;
     } else {
       toast.success("Updated!");
+      setLoading(false);
+      return;
+    }
+  }
+
+  async function handleUpdateCategoryName(catId: number, newName: string) {
+    console.log("Updating category name...", catId, newName);
+    setLoading(true);
+    const res = await updateCategoryName(catId, newName);
+    if (res?.error) {
+      const errStr = `Error updating category name: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    } else {
+      toast.success("Category name updated successfully!");
       setLoading(false);
       return;
     }
@@ -214,7 +232,7 @@ export default function DisplayForm({
       */}
       <section className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
-        <div className="mb-4 w-full">
+        <div className="mb-4 w-full overflow">
           {/* Table Header */}
           <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Name</div>
@@ -234,15 +252,29 @@ export default function DisplayForm({
                   key={c.id}
                   className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
                 >
-                  <div>{c.name}</div>
+                  <UpdateCategoryNameBox
+                    category={c}
+                    handler={handleUpdateCategoryName}
+                  />
                   <div>
                     <UpdateBox c={c} handler={handleAssignDollars} />
                   </div>
-                  <div>
-                    ${c.monthly_category_details &&
-                      c.monthly_category_details.amount_spent}
-                  </div>
-                  <div>${c.target_amount}</div>
+                    <div>
+                      $
+                      {c.monthly_category_details?.amount_spent === 0
+                      ? "0"
+                      : c.monthly_category_details?.amount_spent !== null && c.monthly_category_details?.amount_spent % 1 === 0
+                      ? c.monthly_category_details?.amount_spent
+                      : c.monthly_category_details?.amount_spent !== null ? c.monthly_category_details.amount_spent.toFixed(2) : "0"}
+                    </div>
+                    <div>
+                      $
+                      {c.target_amount === 0
+                      ? "0"
+                      : c.target_amount !== null && c.target_amount % 1 === 0
+                      ? c.target_amount
+                      : c.target_amount !== null ? c.target_amount.toFixed(2) : "0"}
+                    </div>
                 </div>
               );
             })}
