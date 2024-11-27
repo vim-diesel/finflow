@@ -79,6 +79,14 @@ export async function addTransaction(
     }).toPlainObject();
   }
 
+  // Todo: Inflow
+  // add the transaction amount to next monthlyBudget's available amount.
+  // if the transaction is posted from a previous month, add it to the current month.
+
+  // Todo: Outflow
+  // Show the user the uncategorized spendings, and ask them to categorize it.
+  //User needs to assign their available funds to categories to cover spending.
+
   revalidatePath("/dashboard");
   return null;
 }
@@ -119,4 +127,44 @@ export async function getTransactions(
   }
 
   return transactions;
+}
+
+export async function updateTransaction(
+  transactionId: number,
+  updates: Partial<Transaction>,
+): Promise<null | PlainAppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+      status: authError?.status,
+    }).toPlainObject();
+  }
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .update(updates)
+    .eq("id", transactionId);
+
+  if (error) {
+    console.error("Error updating transaction: ", error);
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+      status: 500,
+      details: error.details,
+    }).toPlainObject();
+  }
+
+  revalidatePath("/dashboard");
+  return null;
 }

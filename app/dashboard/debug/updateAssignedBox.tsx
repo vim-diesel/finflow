@@ -16,7 +16,7 @@ export default function UpdateAssignedBox({
   handler,
 }: {
   c: CategoryWithDetails;
-  handler: (categoryId: number, amount: number) => void;
+  handler: (categoryId: number, oldAmount: number, newAmount: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
@@ -73,7 +73,10 @@ export default function UpdateAssignedBox({
               setIsOpen(false);
               const amount = parseFloat(assignedAmount?.toString() || "0");
               if (!isNaN(amount) && amount >= 0) {
-                handler(c.id, amount);
+                console.log("category id", c.id);
+                console.log("old amount", c.monthly_category_details.amount_assigned ?? 0);
+                console.log("new amount", amount);
+                handler(c.id, c.monthly_category_details.amount_assigned ?? 0, amount);
               }
             }}
           >

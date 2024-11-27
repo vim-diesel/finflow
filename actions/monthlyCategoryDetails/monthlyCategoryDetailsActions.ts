@@ -9,7 +9,8 @@ import { revalidatePath } from "next/cache";
 export async function updateAssigned(
   monthlyBudgetId: number,
   categoryId: number,
-  amountAssigned: number,
+  oldAmount: number,
+  newAmount: number,
 ): Promise<MonthlyCategoryDetails | PlainAppError> {
   const supabase = createServersideClient();
   const {
@@ -27,10 +28,17 @@ export async function updateAssigned(
     }).toPlainObject();
   }
 
-  if (amountAssigned < 0) {
+  if (newAmount < 0) {
     return new AppError({
       name: "VALIDATION_ERROR",
       message: "Assigned amount must be non-negative",
+    }).toPlainObject();
+  }
+
+  if (isNaN(newAmount) || newAmount < 0) {
+    return new AppError({
+      name: "VALIDATION_ERROR",
+      message: "Assigned amount must be a positive number",
     }).toPlainObject();
   }
 
@@ -41,7 +49,7 @@ export async function updateAssigned(
         user_id: user.id,
         monthly_budget_id: monthlyBudgetId,
         category_id: categoryId,
-        amount_assigned: amountAssigned,
+        amount_assigned: newAmount,
       },
       { onConflict: "monthly_budget_id,category_id" },
     )
@@ -61,7 +69,41 @@ export async function updateAssigned(
           user_id: user.id,
           monthly_budget_id: monthlyBudgetId,
           category_id: categoryId,
-          amount_assigned: amountAssigned,
+          amount_assigned: newAmount,
+        },
+      },
+    }).toPlainObject();
+  }
+
+  // Update the monthly_available amount in the monthly_budgets table
+  // by the difference between the old and new amounts
+  const amountDiff = oldAmount - newAmount;
+  const { error: updateError } = await supabase.rpc(
+    "update_monthly_available",
+    {
+      p_monthly_budget_id: monthlyBudgetId,
+      p_amount: amountDiff,
+    },
+  );
+
+  if (updateError) {
+    console.error(
+      "Error updating monthly_available when assignign to category: ",
+      updateError,
+    );
+    return new AppError({
+      name: "DB_ERROR",
+      message: updateError.message,
+      code: updateError.code,
+      status: 500,
+      details: updateError.details,
+      hint: {
+        attemptedUpdate: {
+          monthlyBudgetId,
+          amountDiff,
+        },
+        category: {
+          categoryId,
         },
       },
     }).toPlainObject();

@@ -17,6 +17,7 @@ import {
   deleteCategory,
   updateCategoryName,
   updateMonthlyGoal,
+  updateTransaction,
 } from "@/actions";
 import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
@@ -36,10 +37,13 @@ import { updateAssigned } from "@/actions/monthlyCategoryDetails";
 import UpdateCategoryNameBox from "./updateCategoryNameBox";
 import UpdateAssignedBox from "./updateAssignedBox";
 import UpdateGoalBox from "./updateGoalBox";
+import { Dropdown } from "@/components/dropdown";
+import { Listbox } from "@/components/listbox";
+import CategoryList from "./categoryList";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
-  categoryWithDetails: CategoryWithDetails[] | PlainAppError;
+  categoriesWithDetails: CategoryWithDetails[] | PlainAppError;
   monthlyBudget: MonthlyBudget | PlainAppError;
   transactions: Transaction[] | PlainAppError;
   categoryGroups: CategoryGroup[] | PlainAppError;
@@ -63,7 +67,7 @@ const getCurrentDate = () => {
 // app/debug/page.tsx
 export default function DisplayForm({
   budget,
-  categoryWithDetails,
+  categoriesWithDetails,
   monthlyBudget,
   transactions,
   categoryGroups,
@@ -154,7 +158,8 @@ export default function DisplayForm({
 
   async function handleAssignDollars(
     categoryDetailsId: number,
-    assignedAmount: number,
+    oldAmount: number,
+    newAmount: number,
   ) {
     setLoading(true);
     if (!monthlyBudget || isPlainAppError(monthlyBudget)) {
@@ -164,8 +169,8 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
-    const amount = Number(assignedAmount.toFixed(2));
-    if (isNaN(assignedAmount)) {
+    const parsedNewAmount = Number(newAmount.toFixed(2));
+    if (isNaN(parsedNewAmount)) {
       toast.warning("Amount must be a number...", {
         className: "bg-yellow-200",
       });
@@ -175,7 +180,8 @@ export default function DisplayForm({
     const res = await updateAssigned(
       monthlyBudget.id,
       categoryDetailsId,
-      amount,
+      oldAmount,
+      parsedNewAmount,
     );
 
     if (isPlainAppError(res)) {
@@ -222,7 +228,6 @@ export default function DisplayForm({
   }
 
   async function handleDeleteCategory(categoryId: number) {
-    console.log("Deleting category...", categoryId);
     setLoading(true);
     const res = await deleteCategory(categoryId);
     if (res?.error) {
@@ -237,7 +242,13 @@ export default function DisplayForm({
     }
   }
 
-  console.log("monthly budget in displayForm: ", monthlyBudget);
+  async function handleUpdateTransactionCategory(txId: number, catId: number) {
+    setLoading(true);
+    console.log("Updating transaction category...", txId, catId);
+    const res = await updateTransaction(txId, { category_id: catId });
+
+    console.log(res);
+  }
 
   return (
     <div className="sm:p-4">
@@ -279,8 +290,8 @@ export default function DisplayForm({
           </div>
 
           {/* Table Rows */}
-          {Array.isArray(categoryWithDetails) &&
-            categoryWithDetails.map((c) => {
+          {Array.isArray(categoriesWithDetails) &&
+            categoriesWithDetails.map((c) => {
               if (c.name === "Ready to Assign") {
                 return null;
               }
@@ -326,23 +337,27 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="mb-2 grid grid-cols-3 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="mb-2 grid grid-cols-4 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Date</div>
-            <div className="font-semibold">Amount</div>
-            <div className="font-semibold">Type</div>
+            <div className="font-semibold justify-self-center">Inflow</div>
+            <div className="font-semibold justify-self-center">Outflow</div>
+            <div className="font-semibold">Category</div>
           </div>
 
-          {/* Table Rows */}
+          {/* Table Rows 
+             todo: make an inflow and outflow column. 
+          */}
           {Array.isArray(transactions) &&
             transactions.map((tx) => (
-              <div
+                <div
                 key={tx.id}
-                className="mb-2 grid grid-cols-3 gap-4 rounded bg-gray-100 p-4 dark:bg-black"
-              >
+                className="mb-2 grid grid-cols-4 items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                >
                 <div>{tx.date}</div>
-                <div>{tx.amount}</div>
-                <div>{tx.transaction_type}</div>
-              </div>
+                <div className="justify-self-center">{tx.transaction_type === "inflow" && tx.amount}</div>
+                <div className="justify-self-center">{tx.transaction_type === "outflow" && tx.amount }</div>
+                <CategoryList tx={tx} categories={isPlainAppError(categoriesWithDetails) ? null : categoriesWithDetails} handler={handleUpdateTransactionCategory}/>
+                </div>
             ))}
         </div>
       </section>

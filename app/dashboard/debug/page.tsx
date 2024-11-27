@@ -45,11 +45,11 @@ export default async function DebugPage() {
     );
   }
 
-  const categoryWithDetails: CategoryWithDetails[] | PlainAppError =
+  const categoriesWithDetails: CategoryWithDetails[] | PlainAppError =
     await getCategoriesWithDetails(currMonthlyBudget.id);
 
-  if (isPlainAppError(categoryWithDetails)) {
-    return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
+  if (isPlainAppError(categoriesWithDetails)) {
+    return <div>Category Fetch Error: {categoriesWithDetails.error.message}</div>;
   }
 
   const categoryGroups: CategoryGroup[] | PlainAppError =
@@ -69,7 +69,7 @@ export default async function DebugPage() {
         budget={budget}
         monthlyBudget={currMonthlyBudget}
         transactions={txs}
-        categoryWithDetails={categoryWithDetails}
+        categoriesWithDetails={categoriesWithDetails}
         categoryGroups={categoryGroups}
       />
     </>
