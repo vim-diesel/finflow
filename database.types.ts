@@ -273,7 +273,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_monthly_available: {
+        Args: {
+          p_monthly_budget_id: number
+          p_amount: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       frequency_type: "weekly" | "monthly" | "yearly" | "custom"

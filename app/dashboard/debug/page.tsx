@@ -1,3 +1,5 @@
+export const fetchCache = "force-no-store";
+
 import React from "react";
 import {
   Budget,
@@ -13,10 +15,10 @@ import {
   getTransactions,
   getCategoriesWithDetails,
   getCategoryGroups,
+  updateAvailableAmount,
 } from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
-
 
 // app/debug/page.tsx
 export default async function DebugPage() {
@@ -43,15 +45,12 @@ export default async function DebugPage() {
     );
   }
 
-
   const categoryWithDetails: CategoryWithDetails[] | PlainAppError =
     await getCategoriesWithDetails(currMonthlyBudget.id);
 
   if (isPlainAppError(categoryWithDetails)) {
     return <div>Category Fetch Error: {categoryWithDetails.error.message}</div>;
   }
-
-
 
   const categoryGroups: CategoryGroup[] | PlainAppError =
     await getCategoryGroups(budget.id);
@@ -62,8 +61,6 @@ export default async function DebugPage() {
     );
   }
 
-/*   const testSupabase = await updateAssigned(13, 3, 300);
-  console.log("testSupabase: ", testSupabase); */
 
   return (
     <>

@@ -5,7 +5,7 @@ import { MonthlyBudget } from "@/types";
 import { createServersideClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-// 
+//
 // Server Action to fetch the current monthly budget (current: time at which this is called)
 // Inputs:
 // budgetId - the ID of the budget to fetch the current monthly budget for (number)
@@ -62,10 +62,9 @@ export async function getTodaysMonthlyBudget(
     }).toPlainObject();
   }
 
-  // revalidatePath("/dashboard");
+  //revalidatePath("/dashboard/debug");
   return monthlyBudget;
 }
-
 
 // creates a new monthly budget for the given month
 export async function createMonthlyBudget(
@@ -111,4 +110,42 @@ export async function createMonthlyBudget(
   }
 
   return data;
+}
+
+// Add/subtract form the available amount in the monthly_budgets table
+export async function updateAvailableAmount(
+  monthlyBudgetId: number,
+  amount: number,
+): Promise<null | PlainAppError> {
+  const supabase = createServersideClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error authenticating user: ", authError?.message);
+    return new AppError({
+      name: "AUTH_ERROR",
+      message: "User authentication failed or user not found",
+      code: authError?.code,
+    }).toPlainObject();
+  }
+
+  const { error } = await supabase.rpc("update_monthly_available", {
+    p_monthly_budget_id: monthlyBudgetId,
+    p_amount: amount,
+  });
+
+  if (error) {
+    console.error("Error updating available amount: ", error);
+    return new AppError({
+      name: "DB_ERROR",
+      message: error.message,
+      code: error.code,
+    }).toPlainObject();
+  }
+
+  revalidatePath("/dashboard/debug");
+  return null;
 }
