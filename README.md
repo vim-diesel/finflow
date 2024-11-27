@@ -10,6 +10,8 @@ Run the development server:
 npm run dev
 ```
 
+Head over to /dashbaord/debug to see the gears in action.
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Technologies
