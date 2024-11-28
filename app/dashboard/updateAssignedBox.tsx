@@ -74,9 +74,9 @@ export default function UpdateAssignedBox({
               const amount = parseFloat(assignedAmount?.toString() || "0");
               if (!isNaN(amount) && amount >= 0) {
                 console.log("category id", c.id);
-                console.log("old amount", c.monthly_category_details.amount_assigned ?? 0);
+                console.log("old amount", c.monthly_category_details?.amount_assigned ?? 0);
                 console.log("new amount", amount);
-                handler(c.id, c.monthly_category_details.amount_assigned ?? 0, amount);
+                handler(c.id, c.monthly_category_details?.amount_assigned ?? 0, amount);
               }
             }}
           >

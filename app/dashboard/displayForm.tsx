@@ -37,8 +37,6 @@ import { updateAssigned } from "@/actions/monthlyCategoryDetails";
 import UpdateCategoryNameBox from "./updateCategoryNameBox";
 import UpdateAssignedBox from "./updateAssignedBox";
 import UpdateGoalBox from "./updateGoalBox";
-import { Dropdown } from "@/components/dropdown";
-import { Listbox } from "@/components/listbox";
 import CategoryList from "./categoryList";
 
 interface DebugPageProps {
@@ -90,6 +88,7 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
+    
     if (!categoryGroupId) {
       toast.warning("Select a category group first...", {
         className: "bg-yellow-200",
@@ -97,7 +96,16 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
-    const res = await addCategory(inputNewCategory, categoryGroupId);
+
+    if (isPlainAppError(monthlyBudget)) {
+      toast.error("Monthly budget is not defined or is an error", {
+        className: "bg-rose-500",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const res = await addCategory(monthlyBudget.id, inputNewCategory, categoryGroupId);
     if (res?.error) {
       const errStr = `Error adding category: ${res.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
@@ -111,9 +119,9 @@ export default function DisplayForm({
     }
   }
 
-  async function handleAddTransaction(input: string, type: string) {
+  async function handleAddTransaction() {
     setLoading(true);
-    const amount = Number(input);
+    const amount = Number(inputAmount);
 
     if (isNaN(amount)) {
       toast.warning("Amount must be a number...", {
@@ -121,7 +129,7 @@ export default function DisplayForm({
       });
       setLoading(false);
       return;
-    } else if (!type || (type !== "inflow" && type !== "outflow")) {
+    } else if (!transactionType || (transactionType !== "inflow" && transactionType !== "outflow")) {
       toast.warning("Invalid transaction type...", {
         className: "bg-yellow-200",
       });
@@ -141,6 +149,8 @@ export default function DisplayForm({
       budget.id,
       Number(amount),
       transactionType as "inflow" | "outflow",
+      null,
+      new Date(date),
     );
 
     if (response?.error) {
@@ -244,10 +254,15 @@ export default function DisplayForm({
 
   async function handleUpdateTransactionCategory(txId: number, catId: number) {
     setLoading(true);
-    console.log("Updating transaction category...", txId, catId);
     const res = await updateTransaction(txId, { category_id: catId });
 
-    console.log(res);
+    if (res?.error) {
+      const errStr = `Error updating transaction category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
   }
 
   return (
@@ -337,27 +352,39 @@ export default function DisplayForm({
         <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
         <div className="mb-4 w-full">
           {/* Table Header */}
-          <div className="mb-2 grid grid-cols-4 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+          <div className="mb-2 grid grid-cols-5 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             <div className="font-semibold">Date</div>
-            <div className="font-semibold justify-self-center">Inflow</div>
-            <div className="font-semibold justify-self-center">Outflow</div>
+            <div className="font-semibold">TxID</div>
+            <div className="justify-self-center font-semibold">Inflow</div>
+            <div className="justify-self-center font-semibold">Outflow</div>
             <div className="font-semibold">Category</div>
           </div>
 
-          {/* Table Rows 
-             todo: make an inflow and outflow column. 
-          */}
+          {/* Table Rows */}
           {Array.isArray(transactions) &&
             transactions.map((tx) => (
-                <div
+              <div
                 key={tx.id}
-                className="mb-2 grid grid-cols-4 items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
-                >
+                className="mb-2 grid grid-cols-5 items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+              >
                 <div>{tx.date}</div>
-                <div className="justify-self-center">{tx.transaction_type === "inflow" && tx.amount}</div>
-                <div className="justify-self-center">{tx.transaction_type === "outflow" && tx.amount }</div>
-                <CategoryList tx={tx} categories={isPlainAppError(categoriesWithDetails) ? null : categoriesWithDetails} handler={handleUpdateTransactionCategory}/>
+                <div>{tx.id}</div>
+                <div className="justify-self-center">
+                  {tx.transaction_type === "inflow" && tx.amount}
                 </div>
+                <div className="justify-self-center">
+                  {tx.transaction_type === "outflow" && tx.amount}
+                </div>
+                <CategoryList
+                  tx={tx}
+                  categories={
+                    isPlainAppError(categoriesWithDetails)
+                      ? null
+                      : categoriesWithDetails
+                  }
+                  handler={handleUpdateTransactionCategory}
+                />
+              </div>
             ))}
         </div>
       </section>
@@ -434,7 +461,7 @@ export default function DisplayForm({
           className="my-2 max-w-32"
         />
         <Button
-          onClick={() => handleAddTransaction(inputAmount, transactionType)}
+          onClick={() => handleAddTransaction()}
         >
           Add
         </Button>

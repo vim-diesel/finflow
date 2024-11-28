@@ -149,7 +149,6 @@ export async function getMonthlyCategoryDetails(
 }
 
 export async function createMonthlyCategoryDetails(
-  budgetId: number,
   categoryId: number,
   monthlyBudgetId: number,
 ): Promise<MonthlyCategoryDetails | PlainAppError> {
