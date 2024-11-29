@@ -1,6 +1,6 @@
 export const fetchCache = "force-no-store";
 
-import React from "react";
+import React, { Suspense } from "react";
 import {
   Budget,
   CategoryGroup,
@@ -9,10 +9,7 @@ import {
   Transaction,
 } from "@/types/types";
 import { AppError, isPlainAppError, PlainAppError } from "@/errors";
-import {
-  createDefaultBudget,
-  createMonthlyBudget,
-} from "@/actions";
+import { createDefaultBudget, createMonthlyBudget } from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
 import { createServersideClient } from "@/utils/supabase/server";
@@ -158,10 +155,13 @@ async function getTodaysMonthlyBudget(
       name: "DB_ERROR",
       message: error.message,
       code: error.code,
-      hint: typeof error.hint === 'string' ? { message: error.hint } : error.hint || {
-        budgetId,
-        firstDayOfMonthUTC
-      }
+      hint:
+        typeof error.hint === "string"
+          ? { message: error.hint }
+          : error.hint || {
+              budgetId,
+              firstDayOfMonthUTC,
+            },
     }).toPlainObject();
   }
 
@@ -243,7 +243,7 @@ export async function getCategoriesWithDetails(
       )
     `,
     )
-    .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID)
+    .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
 
   if (error || !categoriesWithDetails) {
     console.error("Error fetching categories with details: ", error);
@@ -283,7 +283,8 @@ export default async function DebugPage() {
 
   // Sort transactions by date first (desc), then by id if dates are the same (asc)
   txs.sort((a, b) => {
-    const dateComparison = new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
+    const dateComparison =
+      new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
     if (dateComparison !== 0) {
       return dateComparison;
     }
@@ -304,10 +305,10 @@ export default async function DebugPage() {
     await getCategoriesWithDetails(currMonthlyBudget.id);
 
   if (isPlainAppError(categoriesWithDetails)) {
-    return <div>Category Fetch Error: {categoriesWithDetails.error.message}</div>;
+    return (
+      <div>Category Fetch Error: {categoriesWithDetails.error.message}</div>
+    );
   }
-
-
 
   const categoryGroups: CategoryGroup[] | PlainAppError =
     await getCategoryGroups(budget.id);
@@ -318,17 +319,18 @@ export default async function DebugPage() {
     );
   }
 
-
   return (
     <>
-      <Toaster />
-      <DisplayForm
-        budget={budget}
-        monthlyBudget={currMonthlyBudget}
-        transactions={txs}
-        categoriesWithDetails={categoriesWithDetails}
-        categoryGroups={categoryGroups}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Toaster />
+        <DisplayForm
+          budget={budget}
+          monthlyBudget={currMonthlyBudget}
+          transactions={txs}
+          categoriesWithDetails={categoriesWithDetails}
+          categoryGroups={categoryGroups}
+        />
+      </Suspense>
     </>
   );
 }

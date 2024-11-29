@@ -38,6 +38,7 @@ import UpdateCategoryNameBox from "./updateCategoryNameBox";
 import UpdateAssignedBox from "./updateAssignedBox";
 import UpdateGoalBox from "./updateGoalBox";
 import CategoryList from "./categoryList";
+import {format, parseISO} from "date-fns";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -60,6 +61,10 @@ const getCurrentDate = () => {
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are zero-based
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+};
+
+const printDate = (date: DateType) => {
+  return format(parseISO(date), "MMMM yyyy");
 };
 
 // app/debug/page.tsx
@@ -88,7 +93,7 @@ export default function DisplayForm({
       setLoading(false);
       return;
     }
-    
+
     if (!categoryGroupId) {
       toast.warning("Select a category group first...", {
         className: "bg-yellow-200",
@@ -105,7 +110,11 @@ export default function DisplayForm({
       return;
     }
 
-    const res = await addCategory(monthlyBudget.id, inputNewCategory, categoryGroupId);
+    const res = await addCategory(
+      monthlyBudget.id,
+      inputNewCategory,
+      categoryGroupId,
+    );
     if (res?.error) {
       const errStr = `Error adding category: ${res.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
@@ -129,7 +138,10 @@ export default function DisplayForm({
       });
       setLoading(false);
       return;
-    } else if (!transactionType || (transactionType !== "inflow" && transactionType !== "outflow")) {
+    } else if (
+      !transactionType ||
+      (transactionType !== "inflow" && transactionType !== "outflow")
+    ) {
       toast.warning("Invalid transaction type...", {
         className: "bg-yellow-200",
       });
@@ -166,7 +178,7 @@ export default function DisplayForm({
     return;
   }
 
-  async function handleAssignDollars(
+  async function handleUpdateAssigned(
     categoryDetailsId: number,
     oldAmount: number,
     newAmount: number,
@@ -284,7 +296,9 @@ export default function DisplayForm({
         {!isPlainAppError(monthlyBudget) && (
           <DescriptionList>
             <DescriptionTerm>Month</DescriptionTerm>
-            <DescriptionDetails>{monthlyBudget.month}</DescriptionDetails>
+            <DescriptionDetails>
+              {printDate(monthlyBudget.month)}
+            </DescriptionDetails>
             <DescriptionTerm>Available</DescriptionTerm>
             <DescriptionDetails>{monthlyBudget.available}</DescriptionDetails>
           </DescriptionList>
@@ -321,7 +335,7 @@ export default function DisplayForm({
                     handlerDelete={handleDeleteCategory}
                   />
                   <div>
-                    <UpdateAssignedBox c={c} handler={handleAssignDollars} />
+                    <UpdateAssignedBox c={c} handler={handleUpdateAssigned} />
                   </div>
                   <div>
                     $
@@ -460,11 +474,7 @@ export default function DisplayForm({
           onChange={(e) => setDate(e.target.value)}
           className="my-2 max-w-32"
         />
-        <Button
-          onClick={() => handleAddTransaction()}
-        >
-          Add
-        </Button>
+        <Button onClick={() => handleAddTransaction()}>Add</Button>
       </section>
       {loading && <div>Loading...</div>}
       <Divider className="my-6" />
