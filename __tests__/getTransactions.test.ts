@@ -1,5 +1,5 @@
 import { getTransactions } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { AppError } from "../errors/errors";
 import { PostgrestError } from "@supabase/supabase-js";
 import { Transaction } from "@/types/types";

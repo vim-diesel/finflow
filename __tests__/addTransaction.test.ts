@@ -1,6 +1,6 @@
 import { AppError } from "@/errors/errors";
 import { addTransaction } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
 
 // Mock the Supabase client

@@ -2,9 +2,8 @@
 
 import { AppError, PlainAppError } from "@/errors";
 import { Transaction } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-
 
 /* User can add a transaction row. 
 
@@ -38,7 +37,7 @@ export async function addTransaction(
   cleared?: boolean | undefined,
   payee?: string | null,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -91,13 +90,11 @@ export async function addTransaction(
   return null;
 }
 
-
-
 export async function updateTransaction(
   transactionId: number,
   updates: Partial<Transaction>,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

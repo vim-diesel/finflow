@@ -1,5 +1,5 @@
 import { updateAssigned } from "../app/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 
 jest.mock("@/utils/supabase/server", () => ({
   createServersideClient: jest.fn(),

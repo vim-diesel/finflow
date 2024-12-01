@@ -2,7 +2,7 @@
 // complex. This is the original Javascript version of the test.
 
 // import { getAvailableAmount } from "../app/actions";
-// import { createServersideClient } from "@/utils/supabase/server";
+// import { createClient } from "@/utils/supabase/server";
 
 // It seems we need seperate tests to test the error being returned from each
 // database query. This is because the function returns after the first error

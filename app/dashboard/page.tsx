@@ -12,10 +12,10 @@ import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import { createDefaultBudget, createMonthlyBudget } from "@/actions";
 import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 
 async function getDefaultBudget(): Promise<Budget | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -68,7 +68,7 @@ async function getDefaultBudget(): Promise<Budget | PlainAppError> {
 async function getTransactions(
   budgetId: number,
 ): Promise<Transaction[] | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -112,7 +112,7 @@ async function getTransactions(
 async function getTodaysMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -172,7 +172,7 @@ async function getTodaysMonthlyBudget(
 async function getCategoryGroups(
   budgetId: number,
 ): Promise<CategoryGroup[] | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -217,7 +217,7 @@ async function getCategoryGroups(
 export async function getCategoriesWithDetails(
   monthlyBudgetID: number,
 ): Promise<CategoryWithDetails[] | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

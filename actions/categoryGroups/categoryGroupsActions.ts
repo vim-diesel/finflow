@@ -2,5 +2,4 @@
 
 import { AppError, PlainAppError } from "@/errors";
 import { CategoryGroup } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
-
+import { createClient } from "@/utils/supabase/server";

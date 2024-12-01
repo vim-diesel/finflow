@@ -2,7 +2,7 @@
 
 import { AppError, PlainAppError } from "@/errors";
 import { MonthlyCategoryDetails } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // Updates the assigned amount for a category in a monthly budget
@@ -12,7 +12,7 @@ export async function updateAssigned(
   oldAmount: number,
   newAmount: number,
 ): Promise<MonthlyCategoryDetails | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -116,7 +116,7 @@ export async function updateAssigned(
 export async function getMonthlyCategoryDetails(
   monthlyBudgetId: number,
 ): Promise<MonthlyCategoryDetails[] | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -152,7 +152,7 @@ export async function createMonthlyCategoryDetails(
   categoryId: number,
   monthlyBudgetId: number,
 ): Promise<MonthlyCategoryDetails | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

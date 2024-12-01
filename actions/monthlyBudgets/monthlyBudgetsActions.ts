@@ -2,16 +2,15 @@
 
 import { AppError, PlainAppError } from "@/errors";
 import { MonthlyBudget } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-
 
 // creates a new monthly budget for the given month
 export async function createMonthlyBudget(
   budgetId: number,
   month: Date,
 ): Promise<MonthlyBudget | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -57,7 +56,7 @@ export async function updateAvailableAmount(
   monthlyBudgetId: number,
   amount: number,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

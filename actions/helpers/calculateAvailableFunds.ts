@@ -1,7 +1,7 @@
 "use server";
 
 import { AppError, PlainAppError } from "@/errors";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 
 // TODO: If there are no rows from the query, we should return null instead of continuing with empty arrays.
 // Fetch the available amount for the given month
@@ -17,7 +17,7 @@ export async function getAvailableAmount(
   budgetId: number,
   month: Date,
 ): Promise<number | null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -37,7 +37,7 @@ export async function getAvailableAmount(
   if (!(month instanceof Date) || isNaN(month.getTime())) {
     return new AppError({
       name: "VALIDATION_ERROR",
-      message: "Invalid date provided"
+      message: "Invalid date provided",
     }).toPlainObject();
   }
 
@@ -147,7 +147,7 @@ export async function calculateAvailableAmount(
   budgetId: number,
   month: string,
 ): Promise<number | AppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

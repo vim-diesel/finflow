@@ -2,11 +2,9 @@
 
 import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import { CategoryWithDetails } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createMonthlyCategoryDetails } from "../monthlyCategoryDetails";
-
-
 
 // Add a new category to the categories table
 // Inputs:
@@ -18,7 +16,7 @@ export async function addCategory(
   categoryName: string,
   groupId: number,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -49,10 +47,16 @@ export async function addCategory(
     }).toPlainObject();
   }
 
-  const categoryDetailsRow = await createMonthlyCategoryDetails(categoryData.id, monthlyBudgetId);
+  const categoryDetailsRow = await createMonthlyCategoryDetails(
+    categoryData.id,
+    monthlyBudgetId,
+  );
 
   if (isPlainAppError(categoryDetailsRow)) {
-    console.error("Error creating monthly category details while adding new category: ", categoryDetailsRow.error.message);
+    console.error(
+      "Error creating monthly category details while adding new category: ",
+      categoryDetailsRow.error.message,
+    );
     return categoryDetailsRow;
   }
 
@@ -70,7 +74,7 @@ export async function updateCategoryName(
   categoryId: number,
   newCategoryName: string,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -114,7 +118,7 @@ export async function updateCategoryName(
 export async function deleteCategory(
   categoryId: number,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -159,13 +163,13 @@ export async function updateMonthlyGoal(
   goalAmount?: number,
   frequency?: "monthly" | "weekly" | "yearly" | "custom",
   dueDay?: number,
-  repeatInterval?: number,  
+  repeatInterval?: number,
   repeatUnit?: "day" | "week" | "month" | "year",
   repeatOn?: boolean,
   snoozed?: boolean,
   dueDate?: Date,
 ): Promise<null | PlainAppError> {
-  const supabase = createServersideClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

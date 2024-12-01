@@ -1,6 +1,6 @@
 import { AppError } from "@/errors/errors";
 import { getDefaultBudget } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { AuthError } from "@supabase/supabase-js";
 
 type SupabaseClientMock = {

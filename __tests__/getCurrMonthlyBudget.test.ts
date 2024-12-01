@@ -1,5 +1,5 @@
 import { getCurrMonthlyBudget } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { PostgrestError } from "@supabase/supabase-js";
 import { AppError } from "@/errors/errors";
 

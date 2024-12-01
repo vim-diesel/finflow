@@ -1,13 +1,14 @@
 "use server";
 
 import { AppError, PlainAppError } from "@/errors";
-import { MonthlyBudget, Budget } from "@/types";
-import { createServersideClient } from "@/utils/supabase/server";
+import { Budget } from "@/types";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-
-export async function createDefaultBudget(budgetName: string): Promise<Budget | PlainAppError> {
-  const supabase = createServersideClient();
+export async function createDefaultBudget(
+  budgetName: string,
+): Promise<Budget | PlainAppError> {
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,

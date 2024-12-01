@@ -1,6 +1,6 @@
 import { AppError } from "@/errors/errors";
 import { getAvailableAmount } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { PostgrestError } from "@supabase/supabase-js";
 
 // It seems we need seperate tests to test the error being returned from each

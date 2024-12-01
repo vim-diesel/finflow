@@ -1,5 +1,5 @@
 import { getCategoriesWithDetails } from "../actions/actions";
-import { createServersideClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { AppError } from "@/errors/errors";
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
 import { CategoryWithDetails } from "@/types/types";
