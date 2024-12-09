@@ -2,16 +2,29 @@ import { isPlainAppError, PlainAppError } from "@/errors";
 import { Transaction, CategoryWithDetails } from "@/types/types";
 
 import CategoryListBox from "./categoryListbox";
+import { use } from "react";
 
-type TransactionsDisplayProps = {
-  transactions: Transaction[] | PlainAppError;
-  categoriesWithDetails: CategoryWithDetails[] | PlainAppError;
+type TransactionsTableProps = {
+  transactionsPromise: Promise<Transaction[] | PlainAppError>;
+  categoriesWithDetailsPromise: Promise<CategoryWithDetails[] | PlainAppError>;
 };
 
-export default function TransactionsDisplay({
-  transactions,
-  categoriesWithDetails,
-}: TransactionsDisplayProps) {
+export default function TransactionsTable({
+  transactionsPromise,
+  categoriesWithDetailsPromise,
+}: TransactionsTableProps) {
+  const transactions = use(transactionsPromise);
+  const categoriesWithDetails = use(categoriesWithDetailsPromise);
+
+  if (isPlainAppError(transactions) || isPlainAppError(categoriesWithDetails)) {
+    return (
+      <div>
+        Error fetching transactions. Try reloading the page, or logging out and
+        in again.
+      </div>
+    );
+  }
+
   return (
     <section className="mb-8">
       <h2 className="mb-4 text-2xl font-bold">Transactions</h2>

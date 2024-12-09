@@ -13,11 +13,11 @@ import { createClient } from "@/utils/supabase/server";
 import BudgetDisplay from "./dash-components/budgetInfo";
 import MonthlyBudgetDisplay from "./dash-components/monthlyBudgetInfo";
 import { Divider } from "@/components/divider";
-import TransactionsDisplay from "./dash-components/transactions";
+import TransactionsDisplay from "./dash-components/transactionsTable/transactionsTable";
 import AddCategoryForm from "./dash-components/addCateogryForm";
 import AddTransactionForm from "./dash-components/addTransactionForm";
 import { Skeleton } from "@/components/ui/skeleton";
-import CategoriesTable from "./dash-components/categoriesTable";
+import CategoriesTable from "./dash-components/categoriesTable/categoriesTable";
 
 export default async function DashboardPage() {
   // We need the budget and the monthly budget id's
@@ -76,6 +76,8 @@ export default async function DashboardPage() {
     currMonthlyBudget.id,
   );
 
+  const transactionsPromise = getTransactions(budget.id);
+
   return (
     <>
       <Toaster />
@@ -101,14 +103,20 @@ export default async function DashboardPage() {
 
         <Divider className="my-6" />
 
-        {/* <TransactionsDisplay
-          budgetId={budget.id}
-          monthlyBudgetId={currMonthlyBudget.id}
-        />
+        <Suspense
+          fallback={
+            <Skeleton className="h-[56px] w-auto rounded-t bg-gray-200 dark:bg-gray-800" />
+          }
+        >
+          <TransactionsDisplay
+            transactionsPromise={transactionsPromise}
+            categoriesWithDetailsPromise={categoryPromise}
+          />
+        </Suspense>
 
         <Divider className="my-6" />
 
-        <AddCategoryForm
+        {/* <AddCategoryForm
           budgetId={budget.id}
           monthlyBudgetId={currMonthlyBudget.id}
         />

@@ -4,7 +4,7 @@ import {
   UpdateAssignedModal,
   UpdateCategoryNameModal,
   UpdateGoalModal,
-} from "./updateModals";
+} from "./updateCategoryModals";
 import { use } from "react";
 import { isPlainAppError, PlainAppError } from "@/errors";
 
