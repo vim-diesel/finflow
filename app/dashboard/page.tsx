@@ -233,7 +233,6 @@ export async function getCategoriesWithDetails(
     }).toPlainObject();
   }
 
-  await new Promise<void>((resolve) => setTimeout(resolve, 5000));
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")

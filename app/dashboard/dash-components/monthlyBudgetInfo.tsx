@@ -1,5 +1,5 @@
 import { DescriptionDetails, DescriptionList, DescriptionTerm } from "@/components/description-list";
-import {  MonthlyBudget } from "@/types/types";
+import { MonthlyBudget } from "@/types/types";
 import { isPlainAppError, PlainAppError } from "@/errors";
 import { format, parseISO } from "date-fns";
 

@@ -1,20 +1,33 @@
+"use client";
+
+import { updateTransaction } from "@/actions";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
 import { CategoryWithDetails, Transaction } from "@/types";
 import React from "react";
+import { toast } from "sonner";
 
-interface CategoryListProps {
+interface CategoryListBoxProps {
   categories: CategoryWithDetails[] | null;
   tx: Transaction;
-  handler(txId: number, catId: number): void;
 }
 
-const CategoryList: React.FC<CategoryListProps> = ({ tx, categories, handler }) => {
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<number | null>(tx.category_id);
+const CategoryListBox: React.FC<CategoryListBoxProps> = ({
+  tx,
+  categories,
+}) => {
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<
+    number | null
+  >(tx.category_id);
 
-  const handleChange = (newCategoryId: number | null) => {
+  const handleChange = async (newCategoryId: number | null) => {
     setSelectedCategoryId(newCategoryId);
     if (newCategoryId !== tx.category_id) {
-      handler(tx.id, newCategoryId!);
+      const res = await updateTransaction(tx.id, { category_id: selectedCategoryId });
+      if (res?.error) {
+        const errStr = `Error updating transaction category: ${res.error.message}`;
+        toast.error(errStr, { className: "bg-rose-500" });
+        return;
+      }
     }
   };
 
@@ -35,4 +48,4 @@ const CategoryList: React.FC<CategoryListProps> = ({ tx, categories, handler }) 
   );
 };
 
-export default CategoryList;
+export default CategoryListBox;
