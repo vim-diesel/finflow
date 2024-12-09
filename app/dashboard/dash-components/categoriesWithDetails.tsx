@@ -4,27 +4,94 @@ import {
   UpdateCategoryNameModal,
   UpdateGoalModal,
 } from "./updateModals";
-import { PlainAppError } from "@/errors";
+import { isPlainAppError, PlainAppError } from "@/errors";
+import { toast } from "sonner";
+import { deleteCategory, updateCategoryName, updateMonthlyGoal } from "@/actions";
+import { updateAssigned } from "@/actions/monthlyCategoryDetails";
+import { MonthlyBudget } from '@/types/types';
 
 type CategoriesDisplayProps = {
   categoriesWithDetails: CategoryWithDetails[] | PlainAppError;
-  handleUpdateCategoryName: (categoryId: number, newName: string) => void;
-  handleDeleteCategory: (categoryId: number) => void;
-  handleUpdateAssigned: (
-    categoryDetailsId: number,
-    oldAmount: number,
-    newAmount: number,
-  ) => void;
-  handleUpdateGoal: (categoryId: number, amount: number) => void;
+  monthlyBudget: MonthlyBudget | PlainAppError;
 };
 
 export default function CategoriesDisplay({
   categoriesWithDetails,
-  handleUpdateCategoryName,
-  handleDeleteCategory,
-  handleUpdateAssigned,
-  handleUpdateGoal,
+  monthlyBudget,
 }: CategoriesDisplayProps) {
+
+  async function handleUpdateCategoryName(categoryId: number, newName: string) {
+    console.log("Updating category name...", categoryId, newName);
+    const res = await updateCategoryName(categoryId, newName);
+    if (res?.error) {
+      const errStr = `Error updating category name: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Category name updated successfully!");
+      return;
+    }
+  }
+
+  async function handleUpdateAssigned(
+    categoryId: number,
+    oldAmount: number,
+    newAmount: number,
+  ) {
+    if (!monthlyBudget || isPlainAppError(monthlyBudget)) {
+      toast.error("Monthly budget is not defined or is an error", {
+        className: "bg-rose-500",
+      });
+      return;
+    }
+    const parsedNewAmount = Number(newAmount.toFixed(2));
+    if (isNaN(parsedNewAmount)) {
+      toast.warning("Amount must be a number...", {
+        className: "bg-yellow-200",
+      });
+      return;
+    }
+    const res = await updateAssigned(
+      monthlyBudget.id,
+      categoryId,
+      oldAmount,
+      parsedNewAmount,
+    );
+
+    if (isPlainAppError(res)) {
+      const errStr = `Error updating assigned dollars: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Updated!");
+      return;
+    }
+  }
+
+  async function handleUpdateGoal(categoryId: number, amount: number) {
+    const res = await updateMonthlyGoal(categoryId, amount);
+    if (res?.error) {
+      const errStr = `Error updating goal: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Goal updated successfully!");
+      return;
+    }
+  }
+
+  async function handleDeleteCategory(categoryId: number) {
+    const res = await deleteCategory(categoryId);
+    if (res?.error) {
+      const errStr = `Error deleting category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Category deleted successfully!");
+      return;
+    }
+  }
+
   return (
     <section className="mb-8">
       <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>

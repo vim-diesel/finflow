@@ -23,22 +23,13 @@ import { Button } from "@/components/button";
 import { RadioField, RadioGroup } from "@/components/radio";
 import { Radio } from "@/components/radio";
 import { Label } from "@headlessui/react";
-import {
-  DescriptionDetails,
-  DescriptionList,
-  DescriptionTerm,
-} from "@/components/description-list";
 import { Divider } from "@/components/divider";
 import { Select } from "@/components/select";
 import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { DateType } from "@/components/input";
 import { updateAssigned } from "@/actions/monthlyCategoryDetails";
-import UpdateCategoryNameBox from "./dash-components/updateModals/updateCategoryNameModal";
-import UpdateAssignedBox from "./dash-components/updateModals/updateAssignedModal";
-import UpdateGoalBox from "./dash-components/updateModals/updateGoalModal";
 import CategoryList from "./categoryList";
-import { format, parseISO } from "date-fns";
 import BudgetDisplay from "./dash-components/budget";
 import MonthlyBudgetDisplay from "./dash-components/monthlyBudget";
 import CategoriesDisplay from "./dash-components/categoriesWithDetails";
@@ -177,91 +168,9 @@ export default function DisplayForm({
     return;
   }
 
-  async function handleUpdateAssigned(
-    categoryId: number,
-    oldAmount: number,
-    newAmount: number,
-  ) {
-    setLoading(true);
-    if (!monthlyBudget || isPlainAppError(monthlyBudget)) {
-      toast.error("Monthly budget is not defined or is an error", {
-        className: "bg-rose-500",
-      });
-      setLoading(false);
-      return;
-    }
-    const parsedNewAmount = Number(newAmount.toFixed(2));
-    if (isNaN(parsedNewAmount)) {
-      toast.warning("Amount must be a number...", {
-        className: "bg-yellow-200",
-      });
-      setLoading(false);
-      return;
-    }
-    const res = await updateAssigned(
-      monthlyBudget.id,
-      categoryId,
-      oldAmount,
-      parsedNewAmount,
-    );
 
-    if (isPlainAppError(res)) {
-      const errStr = `Error updating assigned dollars: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      setLoading(false);
-      return;
-    } else {
-      toast.success("Updated!");
-      setLoading(false);
-      return;
-    }
-  }
 
-  async function handleUpdateGoal(categoryId: number, amount: number) {
-    setLoading(true);
-    const res = await updateMonthlyGoal(categoryId, amount);
-    if (res?.error) {
-      const errStr = `Error updating goal: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      setLoading(false);
-      return;
-    } else {
-      toast.success("Goal updated successfully!");
-      setLoading(false);
-      return;
-    }
-  }
 
-  async function handleUpdateCategoryName(categoryId: number, newName: string) {
-    console.log("Updating category name...", categoryId, newName);
-    setLoading(true);
-    const res = await updateCategoryName(categoryId, newName);
-    if (res?.error) {
-      const errStr = `Error updating category name: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      setLoading(false);
-      return;
-    } else {
-      toast.success("Category name updated successfully!");
-      setLoading(false);
-      return;
-    }
-  }
-
-  async function handleDeleteCategory(categoryId: number) {
-    setLoading(true);
-    const res = await deleteCategory(categoryId);
-    if (res?.error) {
-      const errStr = `Error deleting category: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      setLoading(false);
-      return;
-    } else {
-      toast.success("Category deleted successfully!");
-      setLoading(false);
-      return;
-    }
-  }
 
   async function handleUpdateTransactionCategory(txId: number, catId: number) {
     setLoading(true);
