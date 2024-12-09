@@ -1,5 +1,6 @@
 "use client";
 
+import { updateAssigned } from "@/actions/monthlyCategoryDetails";
 import { Button } from "@/components/button";
 import {
   Dialog,
@@ -10,15 +11,17 @@ import {
 } from "@/components/dialog";
 import { Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
+import { isPlainAppError } from "@/errors";
 import { CategoryWithDetails } from "@/types";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function UpdateAssignedModal({
   c,
-  handler,
+  monthlyBudgetId,
 }: {
   c: CategoryWithDetails;
-  handler: (categoryId: number, oldAmount: number, newAmount: number) => void;
+  monthlyBudgetId: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
@@ -26,6 +29,41 @@ export function UpdateAssignedModal({
       ? c.monthly_category_details.amount_assigned
       : "",
   );
+
+  async function handleUpdateAssigned(
+    categoryId: number,
+    oldAmount: number,
+    newAmount: number,
+  ) {
+    if (!monthlyBudgetId) {
+      toast.error("Monthly budget is not defined or is an error", {
+        className: "bg-rose-500",
+      });
+      return;
+    }
+    const parsedNewAmount = Number(newAmount.toFixed(2));
+    if (isNaN(parsedNewAmount)) {
+      toast.warning("Amount must be a number...", {
+        className: "bg-yellow-200",
+      });
+      return;
+    }
+    const res = await updateAssigned(
+      monthlyBudgetId,
+      categoryId,
+      oldAmount,
+      parsedNewAmount,
+    );
+
+    if (isPlainAppError(res)) {
+      const errStr = `Error updating assigned dollars: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Updated!");
+      return;
+    }
+  }
 
   return (
     <>
@@ -76,13 +114,7 @@ export function UpdateAssignedModal({
               setIsOpen(false);
               const amount = parseFloat(assignedAmount?.toString() || "0");
               if (!isNaN(amount) && amount >= 0) {
-                console.log("category id", c.id);
-                console.log(
-                  "old amount",
-                  c.monthly_category_details?.amount_assigned ?? 0,
-                );
-                console.log("new amount", amount);
-                handler(
+                handleUpdateAssigned(
                   c.id,
                   c.monthly_category_details?.amount_assigned ?? 0,
                   amount,

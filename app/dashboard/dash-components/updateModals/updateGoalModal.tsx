@@ -1,5 +1,6 @@
 "use client";
 
+import { updateMonthlyGoal } from "@/actions";
 import { Button } from "@/components/button";
 import {
   Dialog,
@@ -12,18 +13,29 @@ import { Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 export function UpdateGoalModal({
   c,
-  handler,
 }: {
   c: CategoryWithDetails;
-  handler: (categoryId: number, amount: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [goalAmount, setGoalAmount] = useState<string | undefined>(
     c.target_amount?.toString() || "",
   );
+
+  async function handleUpdateGoal(categoryId: number, amount: number) {
+    const res = await updateMonthlyGoal(categoryId, amount);
+    if (res?.error) {
+      const errStr = `Error updating goal: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Goal updated successfully!");
+      return;
+    }
+  }
 
   return (
     <>
@@ -75,7 +87,7 @@ export function UpdateGoalModal({
               setIsOpen(false);
               const amount = parseFloat(goalAmount || "0");
               if (!isNaN(amount) && amount >= 0) {
-                handler(c.id, amount);
+                handleUpdateGoal(c.id, amount);
               }
             }}
           >

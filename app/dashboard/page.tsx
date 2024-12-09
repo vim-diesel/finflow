@@ -17,6 +17,102 @@ import CategoriesDisplay from "./dash-components/categoriesWithDetails";
 import TransactionsDisplay from "./dash-components/transactions";
 import AddCategoryForm from "./dash-components/addCateogryForm";
 import AddTransactionForm from "./dash-components/addTransactionForm";
+import { Budget, MonthlyBudget } from '@/types/types';
+
+export default async function DashboardPage() {
+
+  // We need the budget and the monthly budget id's
+  // Todo: Fetch budget info from query params. If no params exist, default to current month.
+
+  const budget: Budget | PlainAppError = await getDefaultBudget();
+  if (isPlainAppError(budget)) {
+    return <div>Budget Fetch Error: {budget.error.message}</div>;
+  }
+
+  const currMonthlyBudget: MonthlyBudget | PlainAppError =
+    await getTodaysMonthlyBudget(budget.id);
+  if (isPlainAppError(currMonthlyBudget)) {
+    return (
+      <div>Fetch Monthly Budget Error: {currMonthlyBudget.error.message}</div>
+    );
+  }
+
+  // Could return an empty array if there are no transactions
+  // const txs: Transaction[] | PlainAppError = await getTransactions(budget.id);
+
+  // if (isPlainAppError(txs)) {
+  //   return <div>TX Fetch Error: {txs.error.message}</div>;
+  // }
+
+  // // Sort transactions by date first (desc), then by id if dates are the same (asc)
+  // txs.sort((a, b) => {
+  //   const dateComparison =
+  //     new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
+  //   if (dateComparison !== 0) {
+  //     return dateComparison;
+  //   }
+  //   return a.id - b.id;
+  // });
+
+  // const categoriesWithDetails: CategoryWithDetails[] | PlainAppError =
+  //   await getCategoriesWithDetails(currMonthlyBudget.id);
+
+  // if (isPlainAppError(categoriesWithDetails)) {
+  //   return (
+  //     <div>Category Fetch Error: {categoriesWithDetails.error.message}</div>
+  //   );
+  // }
+
+  // const categoryGroups: CategoryGroup[] | PlainAppError =
+  //   await getCategoryGroups(budget.id);
+
+  // if (isPlainAppError(categoryGroups)) {
+  //   return (
+  //     <div>Category Groups Fetch Error: {categoryGroups.error.message}</div>
+  //   );
+  // }
+
+  const categoryPromise = getCategoriesWithDetails(budget.id, currMonthlyBudget.id);
+
+  return (
+    <>
+      <Toaster />
+      <div className="sm:p-4">
+        <BudgetDisplay budget={budget} />
+
+        <Divider className="my-6" />
+
+        <MonthlyBudgetDisplay monthlyBudget={currMonthlyBudget} />
+
+        <Divider className="my-6" />
+
+        <CategoriesDisplay
+          categoriesWithDetailsPromise={categoryPromise}
+        />
+
+        <Divider className="my-6" />
+
+        {/* <TransactionsDisplay
+          budgetId={budget.id}
+          monthlyBudgetId={currMonthlyBudget.id}
+        />
+
+        <Divider className="my-6" />
+
+        <AddCategoryForm
+          budgetId={budget.id}
+          monthlyBudgetId={currMonthlyBudget.id}
+        />
+
+        <Divider className="my-6" />
+
+        <AddTransactionForm monthlyBudgetId={currMonthlyBudget.id} /> */}
+
+        <Divider className="my-6" />
+      </div>
+    </>
+  );
+}
 
 async function getDefaultBudget(): Promise<Budget | PlainAppError> {
   const supabase = await createClient();
@@ -219,6 +315,7 @@ async function getCategoryGroups(
 // Output: an array of CategoryWithDetails objects or an Error
 // categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
+  budgetId: number,
   monthlyBudgetID: number,
 ): Promise<CategoryWithDetails[] | PlainAppError> {
   const supabase = await createClient();
@@ -247,6 +344,7 @@ export async function getCategoriesWithDetails(
       )
     `,
     )
+    .eq("budget_id", budgetId)
     .eq("monthly_category_details.monthly_budget_id", monthlyBudgetID);
 
   if (error || !categoriesWithDetails) {
@@ -268,98 +366,4 @@ export async function getCategoriesWithDetails(
   // Sort the flattened data so that the highest ids appear first
   const sortedData = flattenedData.sort((a, b) => a.id - b.id);
   return sortedData;
-}
-
-// app/debug/page.tsx
-export default async function DashboardPage() {
-  const budget: Budget | PlainAppError = await getDefaultBudget();
-
-  if (isPlainAppError(budget)) {
-    return <div>Budget Fetch Error: {budget.error.message}</div>;
-  }
-
-  // Could return an empty array if there are no transactions
-  const txs: Transaction[] | PlainAppError = await getTransactions(budget.id);
-
-  if (isPlainAppError(txs)) {
-    return <div>TX Fetch Error: {txs.error.message}</div>;
-  }
-
-  // Sort transactions by date first (desc), then by id if dates are the same (asc)
-  txs.sort((a, b) => {
-    const dateComparison =
-      new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
-    if (dateComparison !== 0) {
-      return dateComparison;
-    }
-    return a.id - b.id;
-  });
-
-  // Todo: Fetch monthly budget from query params. If no params exist, default to current month.
-  const currMonthlyBudget: MonthlyBudget | PlainAppError =
-    await getTodaysMonthlyBudget(budget.id);
-
-  if (isPlainAppError(currMonthlyBudget)) {
-    return (
-      <div>Fetch Monthly Budget Error: {currMonthlyBudget.error.message}</div>
-    );
-  }
-
-  const categoriesWithDetails: CategoryWithDetails[] | PlainAppError =
-    await getCategoriesWithDetails(currMonthlyBudget.id);
-
-  if (isPlainAppError(categoriesWithDetails)) {
-    return (
-      <div>Category Fetch Error: {categoriesWithDetails.error.message}</div>
-    );
-  }
-
-  const categoryGroups: CategoryGroup[] | PlainAppError =
-    await getCategoryGroups(budget.id);
-
-  if (isPlainAppError(categoryGroups)) {
-    return (
-      <div>Category Groups Fetch Error: {categoryGroups.error.message}</div>
-    );
-  }
-
-  return (
-    <>
-      <Toaster />
-      <div className="sm:p-4">
-        <BudgetDisplay budget={budget} />
-
-        <Divider className="my-6" />
-
-        <MonthlyBudgetDisplay monthlyBudget={currMonthlyBudget} />
-
-        <Divider className="my-6" />
-
-        <CategoriesDisplay
-          categoriesWithDetails={categoriesWithDetails}
-          monthlyBudget={currMonthlyBudget}
-        />
-
-        <Divider className="my-6" />
-
-        <TransactionsDisplay
-          transactions={txs}
-          categoriesWithDetails={categoriesWithDetails}
-        />
-
-        <Divider className="my-6" />
-
-        <AddCategoryForm
-          categoryGroups={categoryGroups}
-          monthlyBudget={currMonthlyBudget}
-        />
-
-        <Divider className="my-6" />
-
-        <AddTransactionForm budget={currMonthlyBudget} />
-
-        <Divider className="my-6" />
-      </div>
-    </>
-  );
 }

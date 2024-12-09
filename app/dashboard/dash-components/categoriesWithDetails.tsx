@@ -1,97 +1,21 @@
-"use client";
-
 import { CategoryWithDetails } from "@/types";
 import {
   UpdateAssignedModal,
   UpdateCategoryNameModal,
   UpdateGoalModal,
 } from "./updateModals";
-import { isPlainAppError, PlainAppError } from "@/errors";
-import { toast } from "sonner";
-import { deleteCategory, updateCategoryName, updateMonthlyGoal } from "@/actions";
-import { updateAssigned } from "@/actions/monthlyCategoryDetails";
-import { MonthlyBudget } from '@/types/types';
+import { use } from "react";
 
 type CategoriesDisplayProps = {
-  categoriesWithDetails: CategoryWithDetails[] | PlainAppError;
-  monthlyBudget: MonthlyBudget | PlainAppError;
+  categoriesWithDetailsPromise: Promise<CategoryWithDetails[] | PlainAppError>;
+  monthlyBudgetId: number;
 };
 
 export default function CategoriesDisplay({
-  categoriesWithDetails,
-  monthlyBudget,
+  categoriesWithDetailsPromise,
+  monthlyBudgetId,
 }: CategoriesDisplayProps) {
-
-  async function handleUpdateCategoryName(categoryId: number, newName: string) {
-    const res = await updateCategoryName(categoryId, newName);
-    if (res?.error) {
-      const errStr = `Error updating category name: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      return;
-    } else {
-      toast.success("Category name updated successfully!");
-      return;
-    }
-  }
-
-  async function handleUpdateAssigned(
-    categoryId: number,
-    oldAmount: number,
-    newAmount: number,
-  ) {
-    if (!monthlyBudget || isPlainAppError(monthlyBudget)) {
-      toast.error("Monthly budget is not defined or is an error", {
-        className: "bg-rose-500",
-      });
-      return;
-    }
-    const parsedNewAmount = Number(newAmount.toFixed(2));
-    if (isNaN(parsedNewAmount)) {
-      toast.warning("Amount must be a number...", {
-        className: "bg-yellow-200",
-      });
-      return;
-    }
-    const res = await updateAssigned(
-      monthlyBudget.id,
-      categoryId,
-      oldAmount,
-      parsedNewAmount,
-    );
-
-    if (isPlainAppError(res)) {
-      const errStr = `Error updating assigned dollars: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      return;
-    } else {
-      toast.success("Updated!");
-      return;
-    }
-  }
-
-  async function handleUpdateGoal(categoryId: number, amount: number) {
-    const res = await updateMonthlyGoal(categoryId, amount);
-    if (res?.error) {
-      const errStr = `Error updating goal: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      return;
-    } else {
-      toast.success("Goal updated successfully!");
-      return;
-    }
-  }
-
-  async function handleDeleteCategory(categoryId: number) {
-    const res = await deleteCategory(categoryId);
-    if (res?.error) {
-      const errStr = `Error deleting category: ${res.error.message}`;
-      toast.error(errStr, { className: "bg-rose-500" });
-      return;
-    } else {
-      toast.success("Category deleted successfully!");
-      return;
-    }
-  }
+  const categoriesWithDetails = use(categoriesWithDetailsPromise);
 
   return (
     <section className="mb-8">
@@ -118,11 +42,9 @@ export default function CategoriesDisplay({
               >
                 <UpdateCategoryNameModal
                   category={c}
-                  handlerUpdate={handleUpdateCategoryName}
-                  handlerDelete={handleDeleteCategory}
                 />
                 <div>
-                  <UpdateAssignedModal c={c} handler={handleUpdateAssigned} />
+                  <UpdateAssignedModal c={c} monthlyBudgetId={monthlyBudgetId}/>
                 </div>
                 <div>
                   $
@@ -139,7 +61,7 @@ export default function CategoriesDisplay({
                           : "0"}
                 </div>
                 <div>
-                  <UpdateGoalModal c={c} handler={handleUpdateGoal} />
+                  <UpdateGoalModal c={c} />
                 </div>
               </div>
             );

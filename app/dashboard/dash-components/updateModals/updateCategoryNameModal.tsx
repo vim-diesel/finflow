@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteCategory, updateCategoryName } from "@/actions";
 import { Button } from "@/components/button";
 import {
   Dialog,
@@ -16,15 +17,36 @@ import { toast } from "sonner";
 
 export function UpdateCategoryNameModal({
   category,
-  handlerUpdate,
-  handlerDelete,
 }: {
   category: CategoryWithDetails;
-  handlerUpdate: (categoryId: number, newName: string) => void;
-  handlerDelete: (categoryId: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputName, setInputName] = useState(category.name);
+
+
+  async function handleUpdateCategoryName(categoryId: number, newName: string) {
+    const res = await updateCategoryName(categoryId, newName);
+    if (res?.error) {
+      const errStr = `Error updating category name: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Category name updated successfully!");
+      return;
+    }
+  }
+
+  async function handleDeleteCategory(categoryId: number) {
+    const res = await deleteCategory(categoryId);
+    if (res?.error) {
+      const errStr = `Error deleting category: ${res.error.message}`;
+      toast.error(errStr, { className: "bg-rose-500" });
+      return;
+    } else {
+      toast.success("Category deleted successfully!");
+      return;
+    }
+  }
 
   return (
     <>
@@ -66,7 +88,7 @@ export function UpdateCategoryNameModal({
                   <Button
                     color="red"
                     onClick={() => {
-                      handlerDelete(category.id);
+                      handleDeleteCategory(category.id);
                       toast.dismiss();
                     }}
                   >
@@ -85,7 +107,7 @@ export function UpdateCategoryNameModal({
           <Button
             onClick={() => {
               setIsOpen(false);
-              handlerUpdate(category.id, inputName);
+              handleUpdateCategoryName(category.id, inputName);
             }}
           >
             Set
