@@ -1,8 +1,9 @@
 import { DescriptionDetails, DescriptionList, DescriptionTerm } from "@/components/description-list";
 import { Budget } from "@/types/types";
-import { isPlainAppError, PlainAppError } from "@/errors";
+import {  isPlainAppError, PlainAppError } from "@/errors";
 
-export default function BudgetDisplay({ budget }: { budget: Budget | PlainAppError }) {
+export default async function BudgetDisplay({budget} : {budget: Budget | PlainAppError}) {
+
   return (
     <section className="mb-8">
       <h2 className="mb-4 text-2xl font-bold">Budget</h2>

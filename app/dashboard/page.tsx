@@ -1,5 +1,3 @@
-export const fetchCache = "force-no-store";
-
 import React, { Suspense } from "react";
 import {
   Budget,
@@ -10,9 +8,15 @@ import {
 } from "@/types/types";
 import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import { createDefaultBudget, createMonthlyBudget } from "@/actions";
-import DisplayForm from "./displayForm";
 import { Toaster } from "sonner";
 import { createClient } from "@/utils/supabase/server";
+import BudgetDisplay from "./dash-components/budgetInfo";
+import MonthlyBudgetDisplay from "./dash-components/monthlyBudgetInfo";
+import { Divider } from "@/components/divider";
+import CategoriesDisplay from "./dash-components/categoriesWithDetails";
+import TransactionsDisplay from "./dash-components/transactions";
+import AddCategoryForm from "./dash-components/addCateogryForm";
+import AddTransactionForm from "./dash-components/addTransactionForm";
 
 async function getDefaultBudget(): Promise<Budget | PlainAppError> {
   const supabase = await createClient();
@@ -233,7 +237,6 @@ export async function getCategoriesWithDetails(
     }).toPlainObject();
   }
 
-
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
     .select(
@@ -268,7 +271,7 @@ export async function getCategoriesWithDetails(
 }
 
 // app/debug/page.tsx
-export default async function DebugPage() {
+export default async function DashboardPage() {
   const budget: Budget | PlainAppError = await getDefaultBudget();
 
   if (isPlainAppError(budget)) {
@@ -323,13 +326,40 @@ export default async function DebugPage() {
   return (
     <>
       <Toaster />
-        <DisplayForm
-          budget={budget}
+      <div className="sm:p-4">
+        <BudgetDisplay budget={budget} />
+
+        <Divider className="my-6" />
+
+        <MonthlyBudgetDisplay monthlyBudget={currMonthlyBudget} />
+
+        <Divider className="my-6" />
+
+        <CategoriesDisplay
+          categoriesWithDetails={categoriesWithDetails}
           monthlyBudget={currMonthlyBudget}
+        />
+
+        <Divider className="my-6" />
+
+        <TransactionsDisplay
           transactions={txs}
           categoriesWithDetails={categoriesWithDetails}
-          categoryGroups={categoryGroups}
         />
+
+        <Divider className="my-6" />
+
+        <AddCategoryForm
+          categoryGroups={categoryGroups}
+          monthlyBudget={currMonthlyBudget}
+        />
+
+        <Divider className="my-6" />
+
+        <AddTransactionForm budget={currMonthlyBudget} />
+
+        <Divider className="my-6" />
+      </div>
     </>
   );
 }

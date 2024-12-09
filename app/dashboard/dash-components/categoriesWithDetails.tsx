@@ -23,7 +23,6 @@ export default function CategoriesDisplay({
 }: CategoriesDisplayProps) {
 
   async function handleUpdateCategoryName(categoryId: number, newName: string) {
-    console.log("Updating category name...", categoryId, newName);
     const res = await updateCategoryName(categoryId, newName);
     if (res?.error) {
       const errStr = `Error updating category name: ${res.error.message}`;
