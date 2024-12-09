@@ -17,10 +17,8 @@ import CategoriesDisplay from "./dash-components/categoriesWithDetails";
 import TransactionsDisplay from "./dash-components/transactions";
 import AddCategoryForm from "./dash-components/addCateogryForm";
 import AddTransactionForm from "./dash-components/addTransactionForm";
-import { Budget, MonthlyBudget } from '@/types/types';
 
 export default async function DashboardPage() {
-
   // We need the budget and the monthly budget id's
   // Todo: Fetch budget info from query params. If no params exist, default to current month.
 
@@ -72,7 +70,10 @@ export default async function DashboardPage() {
   //   );
   // }
 
-  const categoryPromise = getCategoriesWithDetails(budget.id, currMonthlyBudget.id);
+  const categoryPromise = getCategoriesWithDetails(
+    budget.id,
+    currMonthlyBudget.id,
+  );
 
   return (
     <>
@@ -86,9 +87,12 @@ export default async function DashboardPage() {
 
         <Divider className="my-6" />
 
-        <CategoriesDisplay
-          categoriesWithDetailsPromise={categoryPromise}
-        />
+        <Suspense fallback={<div>Loading...</div>}>
+          <CategoriesDisplay
+            categoriesWithDetailsPromise={categoryPromise}
+            monthlyBudgetId={currMonthlyBudget.id}
+          />
+        </Suspense>
 
         <Divider className="my-6" />
 
@@ -333,6 +337,8 @@ export async function getCategoriesWithDetails(
       status: authError?.status,
     }).toPlainObject();
   }
+
+  await new Promise((resolve) => setTimeout(resolve, 10000));
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")

@@ -1,3 +1,4 @@
+"use client";
 import { CategoryWithDetails } from "@/types";
 import {
   UpdateAssignedModal,
@@ -5,6 +6,7 @@ import {
   UpdateGoalModal,
 } from "./updateModals";
 import { use } from "react";
+import { PlainAppError } from "@/errors";
 
 type CategoriesDisplayProps = {
   categoriesWithDetailsPromise: Promise<CategoryWithDetails[] | PlainAppError>;
@@ -40,11 +42,12 @@ export default function CategoriesDisplay({
                 key={c.id}
                 className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
               >
-                <UpdateCategoryNameModal
-                  category={c}
-                />
+                <UpdateCategoryNameModal category={c} />
                 <div>
-                  <UpdateAssignedModal c={c} monthlyBudgetId={monthlyBudgetId}/>
+                  <UpdateAssignedModal
+                    c={c}
+                    monthlyBudgetId={monthlyBudgetId}
+                  />
                 </div>
                 <div>
                   $
