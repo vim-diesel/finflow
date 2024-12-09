@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 
 import {
   Budget,
@@ -34,11 +34,14 @@ import { Input, InputGroup } from "@/components/input";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { DateType } from "@/components/input";
 import { updateAssigned } from "@/actions/monthlyCategoryDetails";
-import UpdateCategoryNameBox from "./updateCategoryNameBox";
-import UpdateAssignedBox from "./updateAssignedBox";
-import UpdateGoalBox from "./updateGoalBox";
+import UpdateCategoryNameBox from "./dash-components/updateModals/updateCategoryNameModal";
+import UpdateAssignedBox from "./dash-components/updateModals/updateAssignedModal";
+import UpdateGoalBox from "./dash-components/updateModals/updateGoalModal";
 import CategoryList from "./categoryList";
-import {format, parseISO} from "date-fns";
+import { format, parseISO } from "date-fns";
+import BudgetDisplay from "./dash-components/budget";
+import MonthlyBudgetDisplay from "./dash-components/monthlyBudget";
+import CategoriesDisplay from "./dash-components/categoriesWithDetails";
 
 interface DebugPageProps {
   budget: Budget | PlainAppError;
@@ -48,12 +51,12 @@ interface DebugPageProps {
   categoryGroups: CategoryGroup[] | PlainAppError;
 }
 
-const getCategoryGroupById = (
-  categoryGroupId: number,
-  categoryGroups: CategoryGroup[],
-): CategoryGroup | undefined => {
-  return categoryGroups.find((group) => group.id === categoryGroupId);
-};
+// const getCategoryGroupById = (
+//   categoryGroupId: number,
+//   categoryGroups: CategoryGroup[],
+// ): CategoryGroup | undefined => {
+//   return categoryGroups.find((group) => group.id === categoryGroupId);
+// };
 
 const getCurrentDate = () => {
   const today = new Date();
@@ -61,10 +64,6 @@ const getCurrentDate = () => {
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are zero-based
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-};
-
-const printDate = (date: DateType) => {
-  return format(parseISO(date), "MMMM yyyy");
 };
 
 // app/debug/page.tsx
@@ -179,7 +178,7 @@ export default function DisplayForm({
   }
 
   async function handleUpdateAssigned(
-    categoryDetailsId: number,
+    categoryId: number,
     oldAmount: number,
     newAmount: number,
   ) {
@@ -201,7 +200,7 @@ export default function DisplayForm({
     }
     const res = await updateAssigned(
       monthlyBudget.id,
-      categoryDetailsId,
+      categoryId,
       oldAmount,
       parsedNewAmount,
     );
@@ -233,10 +232,10 @@ export default function DisplayForm({
     }
   }
 
-  async function handleUpdateCategoryName(catId: number, newName: string) {
-    console.log("Updating category name...", catId, newName);
+  async function handleUpdateCategoryName(categoryId: number, newName: string) {
+    console.log("Updating category name...", categoryId, newName);
     setLoading(true);
-    const res = await updateCategoryName(catId, newName);
+    const res = await updateCategoryName(categoryId, newName);
     if (res?.error) {
       const errStr = `Error updating category name: ${res.error.message}`;
       toast.error(errStr, { className: "bg-rose-500" });
@@ -279,86 +278,16 @@ export default function DisplayForm({
 
   return (
     <div className="sm:p-4">
-      <section className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Budget</h2>
-        {!isPlainAppError(budget) && (
-          <DescriptionList>
-            <DescriptionTerm>Budget Name</DescriptionTerm>
-            <DescriptionDetails>{budget.name}</DescriptionDetails>
-          </DescriptionList>
-        )}
-      </section>
+      <BudgetDisplay budget={budget} />
 
       <Divider className="my-6" />
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Current Monthly Budget</h2>
-        {!isPlainAppError(monthlyBudget) && (
-          <DescriptionList>
-            <DescriptionTerm>Month</DescriptionTerm>
-            <DescriptionDetails>
-              {printDate(monthlyBudget.month)}
-            </DescriptionDetails>
-            <DescriptionTerm>Available</DescriptionTerm>
-            <DescriptionDetails>{monthlyBudget.available}</DescriptionDetails>
-          </DescriptionList>
-        )}
-      </section>
+      <MonthlyBudgetDisplay monthlyBudget={monthlyBudget} />
 
       <Divider className="my-6" />
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
-        <div className="overflow mb-4 w-full">
-          {/* Table Header */}
-          <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
-            <div className="font-semibold">Name</div>
-            <div className="font-semibold">Assigned</div>
-            <div className="font-semibold">Spent</div>
-            <div className="font-semibold">Goal</div>
-          </div>
 
-          {/* Table Rows */}
-          {Array.isArray(categoriesWithDetails) &&
-            categoriesWithDetails.map((c) => {
-              if (c.name === "Ready to Assign") {
-                return null;
-              }
-              return (
-                <div
-                  key={c.id}
-                  className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
-                >
-                  <UpdateCategoryNameBox
-                    category={c}
-                    handlerUpdate={handleUpdateCategoryName}
-                    handlerDelete={handleDeleteCategory}
-                  />
-                  <div>
-                    <UpdateAssignedBox c={c} handler={handleUpdateAssigned} />
-                  </div>
-                  <div>
-                    $
-                    {c.monthly_category_details === null ||
-                    c.monthly_category_details?.amount_spent === null
-                      ? "0"
-                      : c.monthly_category_details?.amount_spent === 0
-                        ? "0"
-                        : c.monthly_category_details?.amount_spent !== null &&
-                            c.monthly_category_details?.amount_spent % 1 === 0
-                          ? c.monthly_category_details?.amount_spent
-                          : c.monthly_category_details?.amount_spent !== null
-                            ? c.monthly_category_details.amount_spent.toFixed(2)
-                            : "0"}
-                  </div>
-                  <div>
-                    <UpdateGoalBox c={c} handler={handleUpdateGoal} />
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </section>
+      <CategoriesDisplay categoriesWithDetails={categoriesWithDetails}/>
 
       <Divider className="my-6" />
 

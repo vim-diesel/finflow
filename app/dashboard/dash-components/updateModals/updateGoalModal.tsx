@@ -11,7 +11,7 @@ import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
 import React, { useState } from "react";
 
-export default function UpdateGoalBox({
+export function UpdateGoalModal({
   c,
   handler,
 }: {
@@ -52,7 +52,9 @@ export default function UpdateGoalBox({
               name="amount"
               placeholder="$0.00"
               autoFocus
-              value={goalAmount === "0" || !goalAmount ? "" : goalAmount?.toString()}
+              value={
+                goalAmount === "0" || !goalAmount ? "" : goalAmount?.toString()
+              }
               onChange={(e) => {
                 const value = e.target.value;
                 if (/^\d*\.?\d{0,2}$/.test(value)) {

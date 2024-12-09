@@ -12,7 +12,7 @@ import { CategoryWithDetails } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function UpdateCategoryNameBox({
+export function UpdateCategoryNameModal({
   category,
   handlerUpdate,
   handlerDelete,

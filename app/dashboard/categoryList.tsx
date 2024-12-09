@@ -1,5 +1,5 @@
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
-import { Category, CategoryWithDetails, Transaction } from "@/types";
+import { CategoryWithDetails, Transaction } from "@/types";
 import React from "react";
 
 interface CategoryListProps {
@@ -9,26 +9,25 @@ interface CategoryListProps {
 }
 
 const CategoryList: React.FC<CategoryListProps> = ({ tx, categories, handler }) => {
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<
-    number | null
-  >(tx.category_id);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<number | null>(tx.category_id);
 
-  React.useEffect(() => {
-    if (selectedCategoryId !== tx.category_id) {
-      handler(tx.id, selectedCategoryId!);
+  const handleChange = (newCategoryId: number | null) => {
+    setSelectedCategoryId(newCategoryId);
+    if (newCategoryId !== tx.category_id) {
+      handler(tx.id, newCategoryId!);
     }
-  }, [selectedCategoryId]);
+  };
 
   return (
     <Listbox
       name={`categoryList-${tx.id}`}
       placeholder="Select category&hellip;"
       value={selectedCategoryId}
-      onChange={setSelectedCategoryId}
+      onChange={handleChange}
     >
       {categories &&
         categories.map((category) => (
-          <ListboxOption key={category.id} value={category.id} >
+          <ListboxOption key={category.id} value={category.id}>
             <ListboxLabel>{category.name}</ListboxLabel>
           </ListboxOption>
         ))}

@@ -233,6 +233,8 @@ export async function getCategoriesWithDetails(
     }).toPlainObject();
   }
 
+  await new Promise<void>((resolve) => setTimeout(resolve, 5000));
+
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
     .select(
@@ -321,8 +323,7 @@ export default async function DebugPage() {
 
   return (
     <>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Toaster />
+      <Toaster />
         <DisplayForm
           budget={budget}
           monthlyBudget={currMonthlyBudget}
@@ -330,7 +331,6 @@ export default async function DebugPage() {
           categoriesWithDetails={categoriesWithDetails}
           categoryGroups={categoryGroups}
         />
-      </Suspense>
     </>
   );
 }

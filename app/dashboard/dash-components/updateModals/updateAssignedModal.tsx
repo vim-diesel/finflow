@@ -11,7 +11,7 @@ import { Input } from "@/components/input";
 import { CategoryWithDetails } from "@/types";
 import { useState } from "react";
 
-export default function UpdateAssignedBox({
+export function UpdateAssignedModal({
   c,
   handler,
 }: {
@@ -20,9 +20,10 @@ export default function UpdateAssignedBox({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assignedAmount, setAssignedAmount] = useState(
-    c.monthly_category_details ? c.monthly_category_details.amount_assigned : "",
+    c.monthly_category_details
+      ? c.monthly_category_details.amount_assigned
+      : "",
   );
-
 
   return (
     <>
@@ -74,9 +75,16 @@ export default function UpdateAssignedBox({
               const amount = parseFloat(assignedAmount?.toString() || "0");
               if (!isNaN(amount) && amount >= 0) {
                 console.log("category id", c.id);
-                console.log("old amount", c.monthly_category_details?.amount_assigned ?? 0);
+                console.log(
+                  "old amount",
+                  c.monthly_category_details?.amount_assigned ?? 0,
+                );
                 console.log("new amount", amount);
-                handler(c.id, c.monthly_category_details?.amount_assigned ?? 0, amount);
+                handler(
+                  c.id,
+                  c.monthly_category_details?.amount_assigned ?? 0,
+                  amount,
+                );
               }
             }}
           >
