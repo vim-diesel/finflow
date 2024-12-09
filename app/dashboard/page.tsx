@@ -13,10 +13,11 @@ import { createClient } from "@/utils/supabase/server";
 import BudgetDisplay from "./dash-components/budgetInfo";
 import MonthlyBudgetDisplay from "./dash-components/monthlyBudgetInfo";
 import { Divider } from "@/components/divider";
-import CategoriesDisplay from "./dash-components/categoriesWithDetails";
 import TransactionsDisplay from "./dash-components/transactions";
 import AddCategoryForm from "./dash-components/addCateogryForm";
 import AddTransactionForm from "./dash-components/addTransactionForm";
+import { Skeleton } from "@/components/ui/skeleton";
+import CategoriesTable from "./dash-components/categoriesTable";
 
 export default async function DashboardPage() {
   // We need the budget and the monthly budget id's
@@ -87,8 +88,12 @@ export default async function DashboardPage() {
 
         <Divider className="my-6" />
 
-        <Suspense fallback={<div>Loading...</div>}>
-          <CategoriesDisplay
+        <Suspense
+          fallback={
+            <Skeleton className="h-[56px] w-auto rounded-t bg-gray-200 dark:bg-gray-800" />
+          }
+        >
+          <CategoriesTable
             categoriesWithDetailsPromise={categoryPromise}
             monthlyBudgetId={currMonthlyBudget.id}
           />
@@ -338,7 +343,7 @@ export async function getCategoriesWithDetails(
     }).toPlainObject();
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 10000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")

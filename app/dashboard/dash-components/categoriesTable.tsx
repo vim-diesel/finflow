@@ -6,22 +6,30 @@ import {
   UpdateGoalModal,
 } from "./updateModals";
 import { use } from "react";
-import { PlainAppError } from "@/errors";
+import { isPlainAppError, PlainAppError } from "@/errors";
 
-type CategoriesDisplayProps = {
+type CategoriesTableProps = {
   categoriesWithDetailsPromise: Promise<CategoryWithDetails[] | PlainAppError>;
   monthlyBudgetId: number;
 };
 
-export default function CategoriesDisplay({
+export default function CategoriesTable({
   categoriesWithDetailsPromise,
   monthlyBudgetId,
-}: CategoriesDisplayProps) {
+}: CategoriesTableProps) {
   const categoriesWithDetails = use(categoriesWithDetailsPromise);
+
+  if (isPlainAppError(categoriesWithDetails)) {
+    return (
+      <div>
+        Error fetching categories. Try reloading the page, or logging out and in
+        again.
+      </div>
+    );
+  }
 
   return (
     <section className="mb-8">
-      <h2 className="mb-4 text-2xl font-bold">Categories With Details</h2>
       <div className="overflow mb-4 w-full">
         {/* Table Header */}
         <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
