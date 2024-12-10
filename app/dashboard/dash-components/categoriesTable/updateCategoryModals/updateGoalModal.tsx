@@ -37,6 +37,13 @@ export function UpdateGoalModal({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleUpdateGoal(c.id, parseFloat(goalAmount || "0"));
+      setIsOpen(false);
+    }
+  }
+
   return (
     <>
       <Button
@@ -75,6 +82,7 @@ export function UpdateGoalModal({
                   setGoalAmount(value);
                 }
               }}
+              onKeyDown={handleKeyDown}
             />
           </Field>
         </DialogBody>

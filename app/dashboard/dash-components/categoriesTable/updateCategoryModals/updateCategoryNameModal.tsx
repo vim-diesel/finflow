@@ -48,6 +48,14 @@ export function UpdateCategoryNameModal({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleUpdateCategoryName(category.id, inputName);
+      setIsOpen(false);
+    }
+  }
+
+
   return (
     <>
       <Button
@@ -72,6 +80,7 @@ export function UpdateCategoryNameModal({
               onChange={(e) => {
                 setInputName(e.target.value);
               }}
+              onKeyDown={handleKeyDown}
             />
           </Field>
         </DialogBody>

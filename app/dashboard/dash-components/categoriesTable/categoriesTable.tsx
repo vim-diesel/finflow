@@ -1,4 +1,3 @@
-"use client";
 import { CategoryWithDetails } from "@/types";
 import {
   UpdateAssignedModal,

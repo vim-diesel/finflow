@@ -65,6 +65,17 @@ export function UpdateAssignedModal({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleUpdateAssigned(
+        c.id,
+        c.monthly_category_details?.amount_assigned ?? 0,
+        parseFloat(assignedAmount?.toString() || "0"),
+      );
+      setIsOpen(false);
+    }
+  }
+
   return (
     <>
       <Button
@@ -102,6 +113,7 @@ export function UpdateAssignedModal({
                   setAssignedAmount(value);
                 }
               }}
+              onKeyDown={handleKeyDown}
             />
           </Field>
         </DialogBody>
