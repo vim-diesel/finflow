@@ -10,14 +10,14 @@ import { AppError, isPlainAppError, PlainAppError } from "@/errors";
 import { createDefaultBudget, createMonthlyBudget } from "@/actions";
 import { Toaster } from "sonner";
 import { createClient } from "@/utils/supabase/server";
-import BudgetDisplay from "./dash-components/budgetInfo";
-import MonthlyBudgetDisplay from "./dash-components/monthlyBudgetInfo";
+import BudgetDisplay from "../../components/dash-components/budgetInfo";
+import MonthlyBudgetDisplay from "../../components/dash-components/monthlyBudgetInfo";
 import { Divider } from "@/components/divider";
-import TransactionsDisplay from "./dash-components/transactionsTable/transactionsTable";
-import AddCategoryForm from "./dash-components/addCateogryForm";
-import AddTransactionForm from "./dash-components/addTransactionForm";
+import TransactionsDisplay from "../../components/dash-components/transactionsTable/transactionsTable";
+import AddCategoryForm from "../../components/dash-components/addCateogryForm";
+import AddTransactionForm from "../../components/dash-components/addTransactionForm";
 import { Skeleton } from "@/components/ui/skeleton";
-import CategoriesTable from "./dash-components/categoriesTable/categoriesTable";
+import CategoriesTable from "../../components/dash-components/categoriesTable/categoriesTable";
 
 export default async function DashboardPage() {
   // We need the budget and the monthly budget id's
@@ -220,11 +220,6 @@ async function getTransactions(
   return transactions;
 }
 
-// Inputs:
-// budgetId - the ID of the budget to fetch the current monthly budget for (number)
-//
-// Output: the current monthly budget or an Error
-// monthlyBudget - the current monthly budget (Today)
 // TODO: Run calculations to update the total available amount upon user login
 async function getTodaysMonthlyBudget(
   budgetId: number,
@@ -325,12 +320,6 @@ async function getCategoryGroups(
   return data;
 }
 
-// Fetch the JOINed table of our categories and their monthly details
-// Inputs:
-// budgetId - the ID of the budget to fetch categories for (number)
-//
-// Output: an array of CategoryWithDetails objects or an Error
-// categoryWithDetails - an array of Category objects with a nested MonthlyCategoryDetails object
 export async function getCategoriesWithDetails(
   budgetId: number,
   monthlyBudgetID: number,
@@ -351,7 +340,6 @@ export async function getCategoriesWithDetails(
     }).toPlainObject();
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const { data: categoriesWithDetails, error } = await supabase
     .from("categories")
