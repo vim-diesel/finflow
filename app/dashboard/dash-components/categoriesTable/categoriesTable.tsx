@@ -1,5 +1,6 @@
 import { CategoryWithDetails } from "@/types";
 import {
+  AddCategoryModal,
   UpdateAssignedModal,
   UpdateCategoryNameModal,
   UpdateGoalModal,
@@ -30,8 +31,11 @@ export default function CategoriesTable({
   return (
     <section className="mb-8">
       <div className="overflow mb-4 w-full">
+        <div className="mb-2">
+          <AddCategoryModal />
+        </div>
         {/* Table Header */}
-        <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
+        <div className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 rounded-t bg-slate-400 p-4 dark:bg-slate-800">
           <div className="font-semibold">Name</div>
           <div className="font-semibold">Assigned</div>
           <div className="font-semibold">Spent</div>
@@ -47,7 +51,7 @@ export default function CategoriesTable({
             return (
               <div
                 key={c.id}
-                className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 rounded bg-gray-100 p-4 dark:bg-black"
+                className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 bg-gray-100 p-4 dark:bg-black"
               >
                 <UpdateCategoryNameModal category={c} />
                 <div>
