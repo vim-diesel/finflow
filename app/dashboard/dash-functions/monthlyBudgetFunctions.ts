@@ -1,15 +1,19 @@
-// Inputs:
-// budgetId - the ID of the budget to fetch the current monthly budget for (number)
-//
-// Output: the current monthly budget or an Error
-// monthlyBudget - the current monthly budget (Today)
-
 import { createMonthlyBudget } from "@/actions";
 import { AppError, PlainAppError } from "@/errors";
 import { MonthlyBudget } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 
+
 // TODO: Run calculations to update the total available amount upon user login
+/**
+ * Retrieves the monthly budget for today based on the provided budget ID.
+ * If the user is not authenticated or an error occurs during authentication,
+ * an authentication error is returned. If no monthly budget is found for the
+ * current month, a new monthly budget is created.
+ *
+ * @param {number} budgetId - The ID of the budget to retrieve.
+ * @returns {Promise<MonthlyBudget | PlainAppError>} - The monthly budget for today or an error object.
+ */
 export async function getTodaysMonthlyBudget(
   budgetId: number,
 ): Promise<MonthlyBudget | PlainAppError> {

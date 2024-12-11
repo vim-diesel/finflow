@@ -3,7 +3,19 @@ import { AppError, PlainAppError } from "@/errors";
 import { Budget } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 
-
+/**
+ * Retrieves the default budget for the authenticated user.
+ * 
+ * This function interacts with the Supabase client to fetch the default budget
+ * associated with the currently authenticated user. If the user is not authenticated
+ * or an error occurs during authentication, a custom error object is returned.
+ * 
+ * If no budget is found for the user, a default budget is created and returned.
+ * 
+ * @returns {Promise<Budget | PlainAppError>} A promise that resolves to the user's budget
+ * or a custom error object if an error occurs.
+ * 
+ */
 export async function getDefaultBudget(): Promise<Budget | PlainAppError> {
   const supabase = await createClient();
   const {
@@ -23,6 +35,9 @@ export async function getDefaultBudget(): Promise<Budget | PlainAppError> {
     }).toPlainObject();
   }
 
+  // the limit() and single() methods will prevent multiple monthly budgets coming
+  // back, but that shouldn't happen as we are not giving the user any way to 
+  // create multiple budgets (for now)
   const { data: budget, error } = await supabase
     .from("budgets")
     .select("*")
@@ -36,8 +51,6 @@ export async function getDefaultBudget(): Promise<Budget | PlainAppError> {
     // If no budget is found, create a default budget.
     // This also is true if multiple budgets are found and single() is called,
     // but we used a limit of 1, so that shouldn't happen.
-    // in a future update, we can allow for multiple budgets.
-    // Todo: move this to a call from the client. (does that matter?)
     if (error.code === "PGRST116") {
       const budgetName = `${user.email}'s Budget`;
       return await createDefaultBudget(budgetName);
