@@ -7,7 +7,7 @@ const printDate = (date: string) => {
   return format(parseISO(date), "MMMM yyyy");
 };
 
-export default function MonthlyBudgetDisplay({ monthlyBudget }: { monthlyBudget: MonthlyBudget | PlainAppError }) {
+export default function MonthlyBudgetDescription({ monthlyBudget }: { monthlyBudget: MonthlyBudget | PlainAppError }) {
   return (
     <section className="mb-8">
     <h2 className="mb-4 text-2xl font-bold">Current Monthly Budget</h2>

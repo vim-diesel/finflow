@@ -2,7 +2,7 @@ import { DescriptionDetails, DescriptionList, DescriptionTerm } from "@/componen
 import { Budget } from "@/types/types";
 import {  isPlainAppError, PlainAppError } from "@/errors";
 
-export default async function BudgetDisplay({budget} : {budget: Budget | PlainAppError}) {
+export default async function BudgetDescription({budget} : {budget: Budget | PlainAppError}) {
 
   return (
     <section className="mb-8">

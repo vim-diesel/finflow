@@ -1,20 +1,23 @@
 import React, { Suspense } from "react";
-import {
-  Budget,
-  MonthlyBudget,
-} from "@/types/types";
+import { Budget, MonthlyBudget } from "@/types/types";
 import { isPlainAppError, PlainAppError } from "@/errors";
 
 import { Toaster } from "sonner";
-import BudgetDisplay from "./dash-components/budgetInfo";
-import MonthlyBudgetDisplay from "./dash-components/monthlyBudgetInfo";
 import { Divider } from "@/components/divider";
-import TransactionsDisplay from "./dash-components/transactionsTable/transactionsTable";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import AddCategoryForm from "./dash-components/addCateogryForm";
 import AddTransactionForm from "./dash-components/addTransactionForm";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  getCategoriesWithDetails,
+  getDefaultBudget,
+  getTodaysMonthlyBudget,
+  getTransactions,
+} from "./dash-functions";
+import BudgetDescription from "./dash-components/budgetDescription";
+import MonthlyBudgetDescription from "./dash-components/monthlyBudgetDescription";
 import CategoriesTable from "./dash-components/categoriesTable/categoriesTable";
-import { getCategoriesWithDetails, getDefaultBudget, getTodaysMonthlyBudget, getTransactions } from "./dash-functions";
+import TransactionsTable from "./dash-components/transactionsTable/transactionsTable";
 
 export default async function DashboardPage() {
   // We need the budget and the monthly budget id's
@@ -79,11 +82,11 @@ export default async function DashboardPage() {
     <>
       <Toaster />
       <div className="sm:p-4">
-        <BudgetDisplay budget={budget} />
+        <BudgetDescription budget={budget} />
 
         <Divider className="my-6" />
 
-        <MonthlyBudgetDisplay monthlyBudget={currMonthlyBudget} />
+        <MonthlyBudgetDescription monthlyBudget={currMonthlyBudget} />
 
         <Divider className="my-6" />
 
@@ -105,7 +108,7 @@ export default async function DashboardPage() {
             <Skeleton className="h-[56px] w-auto rounded-t bg-gray-200 dark:bg-gray-800" />
           }
         >
-          <TransactionsDisplay
+          <TransactionsTable
             transactionsPromise={transactionsPromise}
             categoriesWithDetailsPromise={categoryPromise}
           />
