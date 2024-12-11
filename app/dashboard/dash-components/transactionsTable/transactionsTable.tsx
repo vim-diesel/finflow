@@ -28,8 +28,9 @@ export default function TransactionsTable({
 
   return (
     <section className="mb-8">
-      <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
-      <AddTransactionModal />
+      <div className="mb-2">
+        <AddTransactionModal />
+      </div>
       <div className="mb-4 w-full">
         {/* Table Header */}
         <div className="mb-2 grid grid-cols-5 gap-4 rounded-t bg-gray-200 p-4 dark:bg-gray-800">
