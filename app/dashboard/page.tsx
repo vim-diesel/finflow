@@ -6,8 +6,6 @@ import { Toaster } from "sonner";
 import { Divider } from "@/components/divider";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import AddCategoryForm from "./dash-components/addCateogryForm";
-import AddTransactionForm from "./dash-components/addTransactionForm";
 import {
   getCategoriesWithDetails,
   getDefaultBudget,

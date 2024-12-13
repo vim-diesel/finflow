@@ -53,7 +53,7 @@ export async function addTransaction(
     }).toPlainObject();
   }
 
-  const { data, error } = await supabase.from("transactions").insert({
+  const { error } = await supabase.from("transactions").insert({
     budget_id: budgetId,
     amount,
     transaction_type: transactionType,
@@ -110,7 +110,7 @@ export async function updateTransaction(
     }).toPlainObject();
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("transactions")
     .update(updates)
     .eq("id", transactionId);

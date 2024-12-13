@@ -22,7 +22,7 @@ const CategoryListBox: React.FC<CategoryListBoxProps> = ({
   const handleChange = async (newCategoryId: number | null) => {
     setSelectedCategoryId(newCategoryId);
     if (newCategoryId !== tx.category_id) {
-      const res = await updateTransaction(tx.id, { category_id: selectedCategoryId });
+      const res = await updateTransaction(tx.id, { category_id: newCategoryId });
       if (res?.error) {
         const errStr = `Error updating transaction category: ${res.error.message}`;
         toast.error(errStr, { className: "bg-rose-500" });
