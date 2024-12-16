@@ -37,6 +37,7 @@ const CategoryListBox: React.FC<CategoryListBoxProps> = ({
       placeholder="Select category&hellip;"
       value={selectedCategoryId}
       onChange={handleChange}
+      disabled={false}
     >
       {categories &&
         categories.map((category) => (
