@@ -100,12 +100,13 @@ export async function updateCategoryName(
     }).toPlainObject();
   }
 
+  // Will error if no updates are applied due to the single() method
   const { error } = await supabase
     .from("categories")
     .update({ name: newCategoryName })
     .eq("id", categoryId)
     .eq("user_id", user.id)
-    .select("*");
+    .single();
 
   if (error) {
     console.error("Error updating category name: ", error);

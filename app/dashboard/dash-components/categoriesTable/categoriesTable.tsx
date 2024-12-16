@@ -54,7 +54,7 @@ export default function CategoriesTable({
                 key={c.id}
                 className="mb-2 grid grid-cols-[3fr_1fr_1fr_1fr] items-center gap-4 bg-gray-100 p-4 dark:bg-black"
               >
-                <CategoryNameInput categoryName={c.name} />
+                <CategoryNameInput categoryName={c.name} categoryId={c.id}/>
                 <div>
                   <UpdateAssignedModal
                     c={c}

@@ -2,6 +2,7 @@ import { DescriptionDetails, DescriptionList, DescriptionTerm } from "@/componen
 import { MonthlyBudget } from "@/types/types";
 import { isPlainAppError, PlainAppError } from "@/errors";
 import { format, parseISO } from "date-fns";
+import { Button } from "@/components/button";
 
 const printDate = (date: string) => {
   return format(parseISO(date), "MMMM yyyy");
@@ -18,7 +19,7 @@ export default function MonthlyBudgetDescription({ monthlyBudget }: { monthlyBud
           {printDate(monthlyBudget.month)}
         </DescriptionDetails>
         <DescriptionTerm>Available</DescriptionTerm>
-        <DescriptionDetails>{monthlyBudget.available}</DescriptionDetails>
+        <DescriptionDetails>{monthlyBudget.available}<Button outline className="ml-2">Reconcile</Button></DescriptionDetails>
       </DescriptionList>
     )}
   </section>
