@@ -12,7 +12,7 @@ export interface PlainAppError {
     code: string;
     status: number;
     details: string;
-    hint: Record<string, any>;
+    hint: Record<string, unknown>;
   };
 }
 
@@ -22,7 +22,7 @@ export interface AppErrorOptions {
   code?: string;
   status?: number;
   details?: string;
-  hint?: Record<string, any>;
+  hint?: Record<string, unknown>;
 }
 
 // Our custom error class. Use this to pinpoint what kind of error is being returned
@@ -33,7 +33,7 @@ export class AppError extends Error {
   code: string;
   status: number;
   details: string;
-  hint: {};
+  hint: Record<string, unknown>;
 
   constructor(options: AppErrorOptions) {
     super(options.message);
