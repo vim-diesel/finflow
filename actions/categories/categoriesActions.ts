@@ -1,10 +1,20 @@
 "use server";
 
 import { AppError, isPlainAppError, PlainAppError } from "@/errors";
-import { CategoryWithDetails } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createMonthlyCategoryDetails } from "../monthlyCategoryDetails";
+
+interface CategoryGoalUpdate {
+  target_amount?: number;
+  frequency?: "monthly" | "weekly" | "yearly" | "custom";
+  due_day?: number;
+  repeat_interval?: number;
+  repeat_unit?: "day" | "week" | "month" | "year";
+  repeat_on?: boolean;
+  snoozed?: boolean;
+  due_date?: string;
+}
 
 // Add a new category to the categories table
 // Inputs:
@@ -185,7 +195,7 @@ export async function updateMonthlyGoal(
     }).toPlainObject();
   }
 
-  const updateData: any = {};
+  const updateData: CategoryGoalUpdate = {};
   if (goalAmount !== undefined) updateData.target_amount = goalAmount;
   if (frequency !== undefined) updateData.frequency = frequency;
   if (dueDay !== undefined) updateData.due_day = dueDay;
@@ -193,7 +203,14 @@ export async function updateMonthlyGoal(
   if (repeatUnit !== undefined) updateData.repeat_unit = repeatUnit;
   if (repeatOn !== undefined) updateData.repeat_on = repeatOn;
   if (snoozed !== undefined) updateData.snoozed = snoozed;
-  if (dueDate !== undefined) updateData.due_date = dueDate;
+  if (dueDate !== undefined) updateData.due_date = new Date(
+    Date.UTC(
+      dueDate.getUTCFullYear(),
+      dueDate.getUTCMonth(),
+      dueDate.getUTCDate(),
+      0, 0, 0, 0
+    )
+  ).toISOString();
 
   const { error } = await supabase
     .from("categories")
