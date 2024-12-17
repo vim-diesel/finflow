@@ -100,7 +100,7 @@ export function CategoryNameInput({
         <Button
           type="submit"
           color="green"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault()}
           className={cn(
             "!absolute right-1 top-1/2 -translate-y-1/2",
             "transition-all duration-200",

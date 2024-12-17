@@ -9,9 +9,8 @@ import { revalidatePath } from "next/cache";
 export async function updateAssigned(
   monthlyBudgetId: number,
   categoryId: number,
-  oldAmount: number,
   newAmount: number,
-): Promise<MonthlyCategoryDetails | PlainAppError> {
+): Promise<null | PlainAppError> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,19 +18,10 @@ export async function updateAssigned(
   } = await supabase.auth.getUser();
 
   if (authError || !user?.id) {
-    console.error("Error authenticating user: ", authError?.message);
+    console.error("Error authenticating user: ", authError);
     return new AppError({
       name: "AUTH_ERROR",
       message: "User authentication failed or user not found",
-      code: authError?.code,
-      status: authError?.status,
-    }).toPlainObject();
-  }
-
-  if (newAmount < 0) {
-    return new AppError({
-      name: "VALIDATION_ERROR",
-      message: "Assigned amount must be non-negative",
     }).toPlainObject();
   }
 
@@ -42,7 +32,26 @@ export async function updateAssigned(
     }).toPlainObject();
   }
 
-  const { data: upsertData, error: upsertError } = await supabase
+  // Query the database to get the current amount, for use in calculating
+  // the monthly available budget
+  const { data: currentDetails, error: fetchError } = await supabase
+    .from("monthly_category_details")
+    .select("amount_assigned")
+    .eq("monthly_budget_id", monthlyBudgetId);
+
+  if (fetchError) {
+    console.error("Error fetching current amount: ", fetchError);
+    return new AppError({
+      name: "DB_ERROR",
+      message: fetchError?.message || "Error fetching current amount",
+      code: fetchError?.code || "UNKNOWN_ERROR",
+    }).toPlainObject();
+  }
+  
+  // Use the old amount to update the monthly available budget
+  const oldAmount = currentDetails[0]?.amount_assigned || 0;
+
+  const { error: upsertError } = await supabase
     .from("monthly_category_details")
     .upsert(
       {
@@ -61,17 +70,6 @@ export async function updateAssigned(
     return new AppError({
       name: "DB_ERROR",
       message: upsertError.message,
-      code: upsertError.code,
-      status: 500,
-      details: upsertError.details,
-      hint: {
-        attemptedUpsert: {
-          user_id: user.id,
-          monthly_budget_id: monthlyBudgetId,
-          category_id: categoryId,
-          amount_assigned: newAmount,
-        },
-      },
     }).toPlainObject();
   }
 
@@ -94,23 +92,11 @@ export async function updateAssigned(
     return new AppError({
       name: "DB_ERROR",
       message: updateError.message,
-      code: updateError.code,
-      status: 500,
-      details: updateError.details,
-      hint: {
-        attemptedUpdate: {
-          monthlyBudgetId,
-          amountDiff,
-        },
-        category: {
-          categoryId,
-        },
-      },
     }).toPlainObject();
   }
 
   revalidatePath("/dashboard");
-  return upsertData;
+  return null;
 }
 
 export async function getMonthlyCategoryDetails(
