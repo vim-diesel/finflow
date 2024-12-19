@@ -1,12 +1,12 @@
 import { CategoryWithDetails } from "@/types";
 import {
   AddCategoryModal,
-  UpdateAssignedModal,
   UpdateGoalModal,
 } from "./updateCategoryModals";
 import { use } from "react";
 import { isPlainAppError, PlainAppError } from "@/errors";
-import { CategoryNameInput } from "./updateCategoryNameInput";
+import  CategoryNameInput  from "./updateCategoryNameInput";
+import  UpdateAssignedInput  from "./updateAssignedInput";
 
 type CategoriesTableProps = {
   categoriesWithDetailsPromise: Promise<CategoryWithDetails[] | PlainAppError>;
@@ -56,10 +56,7 @@ export default function CategoriesTable({
               >
                 <CategoryNameInput categoryName={c.name} categoryId={c.id}/>
                 <div>
-                  <UpdateAssignedModal
-                    c={c}
-                    monthlyBudgetId={monthlyBudgetId}
-                  />
+                  <UpdateAssignedInput monthlyBudgetId={monthlyBudgetId} categoryId={c.id} assigned={c.monthly_category_details?.amount_assigned ?? 0}/>
                 </div>
                 <div>
                   $

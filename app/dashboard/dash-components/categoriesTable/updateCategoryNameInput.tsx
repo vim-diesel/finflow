@@ -8,7 +8,7 @@ import { ArrowTurnDownRightIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/utils/cn";
 import Spinner from "@/components/ui/spinner";
 
-export function CategoryNameInput({
+export default function CategoryNameInput({
   categoryName,
   categoryId,
 }: {
